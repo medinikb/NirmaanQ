@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In | NirmaanQ</title>
+  <meta name="description" content="Log in to NirmaanQ quantity-to-cost estimation." />
+  <script>
+    (() => {
+      const savedTheme = localStorage.getItem("nirmaanq-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
+    })();
+  </script>
+  <style>
+    :root {
+      --navy: #0b2c4d;
+      --navy-mid: #1a4468;
+      --orange: #f37021;
+      --orange-dark: #d95f16;
+      --white: #ffffff;
+      --off: #f7f7f5;
+      --line: #e7e9ec;
+      --muted: #647083;
+      --ink: #12314f;
+      --danger: #c24135;
+      --success: #147a43;
+      --shadow: 0 24px 64px rgba(11, 44, 77, 0.14);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { color-scheme: light; }
+    html[data-theme="dark"] { color-scheme: dark; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--white);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    .container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+
+    header {
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+    .nav {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { display: flex; align-items: center; }
+    .brand img {
+      width: 86px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: var(--white);
+    }
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .back-link {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      transition: color 0.2s ease;
+    }
+    .back-link:hover { color: var(--orange); }
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--white);
+      color: var(--navy);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .theme-toggle:hover { transform: translateY(-2px); border-color: var(--orange); color: var(--orange); }
+    .theme-toggle-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      box-shadow: inset -6px -3px 0 0 currentColor;
+    }
+    html[data-theme="dark"] .theme-toggle-icon {
+      background: var(--orange);
+      box-shadow: none;
+      transform: scale(0.82);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      align-items: center;
+      background:
+        radial-gradient(ellipse 52% 48% at 16% 18%, rgba(243, 112, 33, 0.09), transparent 72%),
+        linear-gradient(180deg, var(--off), var(--white));
+      padding: 56px 0;
+    }
+    .login-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: min(100%, 470px);
+      padding: clamp(30px, 4vw, 46px);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .login-card h2 {
+      color: var(--navy);
+      font-size: 32px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .login-intro { color: var(--muted); font-size: 15px; margin-bottom: 30px; }
+    .field { margin-bottom: 20px; }
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    label { color: var(--navy); font-size: 13px; font-weight: 800; }
+    .request-link {
+      color: var(--orange);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .request-link:hover { text-decoration: underline; }
+    .input-wrap { position: relative; }
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      min-height: 50px;
+      padding: 0 15px;
+      border: 1px solid #cfd5dc;
+      border-radius: 8px;
+      outline: none;
+      background: var(--white);
+      color: var(--ink);
+      font-size: 15px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px rgba(243, 112, 33, 0.12);
+    }
+    input::placeholder { color: #98a1ad; }
+    .remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .remember input { width: 16px; height: 16px; accent-color: var(--orange); }
+    .demo-note {
+      margin-bottom: 18px;
+      padding: 11px 13px;
+      border: 1px solid rgba(243, 112, 33, 0.24);
+      border-radius: 8px;
+      background: rgba(243, 112, 33, 0.08);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .demo-note strong { color: var(--orange-dark); }
+    .login-button {
+      width: 100%;
+      min-height: 50px;
+      margin-top: 24px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--orange);
+      color: var(--white);
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 12px 28px rgba(243, 112, 33, 0.24);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .login-button:hover { background: var(--orange-dark); transform: translateY(-2px); }
+    .login-button:focus-visible { outline: 3px solid rgba(243, 112, 33, 0.32); outline-offset: 3px; }
+    .form-message {
+      display: none;
+      margin-top: 16px;
+      padding: 11px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .form-message.is-visible { display: block; }
+    .form-message.error { background: rgba(194, 65, 53, 0.09); color: var(--danger); }
+    .form-message.success { background: rgba(20, 122, 67, 0.1); color: var(--success); }
+    .new-user { margin-top: 22px; color: var(--muted); text-align: center; font-size: 14px; }
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      background: #06284b;
+    }
+    .footer-row {
+      min-height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 13px;
+    }
+    .footer-company {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-width: 0;
+    }
+    .footer-logo {
+      width: 62px;
+      height: 62px;
+      flex: 0 0 62px;
+      object-fit: contain;
+    }
+    .footer-copy {
+      display: grid;
+      gap: 5px;
+      line-height: 1.35;
+    }
+    .footer-copy strong { color: var(--white); font-size: 13px; font-weight: 600; }
+    .footer-copy span { color: rgba(255, 255, 255, 0.72); font-size: 12px; }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .footer-links a {
+      padding: 2px 22px;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 12px;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+    .footer-links a + a { border-left: 1px solid rgba(255, 255, 255, 0.32); }
+    .footer-links a:hover { color: var(--orange); }
+
+    body, header, main, footer, .login-card, .workflow-number, input {
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+    html[data-theme="dark"] body { background: #07121d; color: #dce6ef; }
+    html[data-theme="dark"] header { background: rgba(7, 18, 29, 0.96); border-color: #26394a; }
+    html[data-theme="dark"] footer { background: #041f3b; border-color: #26394a; }
+    html[data-theme="dark"] main {
+      background:
+        radial-gradient(ellipse 52% 48% at 16% 18%, rgba(243, 112, 33, 0.12), transparent 72%),
+        linear-gradient(180deg, #0b1a28, #07121d);
+    }
+    html[data-theme="dark"] .login-card h2,
+    html[data-theme="dark"] label { color: #f3f7fb; }
+    html[data-theme="dark"] .field-row label {
+      color: #dce6ef;
+      font-weight: 700;
+    }
+    html[data-theme="dark"] .login-intro,
+    html[data-theme="dark"] .remember,
+    html[data-theme="dark"] .new-user,
+    html[data-theme="dark"] .footer-row,
+    html[data-theme="dark"] .back-link { color: #aab7c4; }
+    html[data-theme="dark"] .login-card,
+    html[data-theme="dark"] input,
+    html[data-theme="dark"] .theme-toggle { background: #0e1d2b; border-color: #31485a; color: #f3f7fb; }
+    html[data-theme="dark"] input {
+      background: #0a1723;
+      border-color: #3a5266;
+      color: #ffffff;
+    }
+    html[data-theme="dark"] input::placeholder { color: #8797a6; }
+    html[data-theme="dark"] input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px rgba(243, 112, 33, 0.16);
+    }
+
+    @media (max-width: 860px) {
+      main { padding: 44px 0; }
+    }
+    @media (max-width: 560px) {
+      .container { width: min(100% - 28px, 1180px); }
+      .nav { min-height: 66px; }
+      .brand img { width: 73px; height: 46px; }
+      .back-link { font-size: 13px; }
+      .theme-toggle { width: 40px; height: 40px; }
+      main { padding: 32px 0; }
+      .login-card { padding: 26px 20px; border-radius: 10px; }
+      .login-card h2 { font-size: 27px; }
+      .footer-row {
+        padding: 22px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+      }
+      .footer-company { gap: 14px; }
+      .footer-logo { width: 54px; height: 54px; flex-basis: 54px; }
+      .footer-links { width: 100%; justify-content: space-between; }
+      .footer-links a { padding: 2px 12px; }
+      .footer-links a:first-child { padding-left: 0; }
+      .footer-links a:last-child { padding-right: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav class="nav" aria-label="Login page navigation">
+        <a class="brand" href="index.html" aria-label="NirmaanQ home">
+          <img src="NirmaanQ-logo-final.png" alt="NirmaanQ logo" />
+        </a>
+        <div class="nav-actions">
+          <a class="back-link" href="index.html">Back to website</a>
+          <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch to dark mode">
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="login-layout">
+        <section class="login-card" aria-labelledby="login-title">
+          <h2 id="login-title">Welcome back</h2>
+          <p class="login-intro">Log in to continue to NirmaanQ</p>
+
+          <form id="login-form" novalidate>
+            <p class="demo-note">
+              <strong>Public demo:</strong> The showcase credentials are pre-filled. Select “Enter Demo” to continue.
+            </p>
+            <div class="field">
+              <div class="field-row">
+                <label for="email">Demo email</label>
+              </div>
+              <div class="input-wrap">
+                <input id="email" name="email" type="email" autocomplete="email" value="demo@nirmaanq.ai" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <label for="password">Password</label>
+              </div>
+              <div class="input-wrap">
+                <input id="password" name="password" type="password" autocomplete="current-password" value="demo2026" minlength="8" required />
+              </div>
+            </div>
+
+            <label class="remember" for="remember">
+              <input id="remember" name="remember" type="checkbox" />
+              Remember me
+            </label>
+
+            <a class="login-button" href="NirmaanQ-Project-Entry.html">Enter Demo</a>
+            <div id="form-message" class="form-message" role="status" aria-live="polite"></div>
+
+            <p class="new-user">New to NirmaanQ? <a class="request-link" href="mailto:hello@nirmaanq.ai?subject=NirmaanQ%20access%20request">Request access</a></p>
+          </form>
+
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-row">
+        <div class="footer-company">
+          <img class="footer-logo" src="NRL_Logo.png" alt="NRL logo" />
+          <div class="footer-copy">
+            <strong>NirmaanQ is an initiative of Numaligarh Refinery Limited (NRL)</strong>
+            <span>&copy; 2026 NRL. All rights reserved.</span>
+          </div>
+        </div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Use</a>
+          <a href="mailto:hello@nirmaanq.ai?subject=NirmaanQ%20support">Support</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const themeToggle = document.querySelector(".theme-toggle");
+    const emailInput = document.querySelector("#email");
+    const passwordInput = document.querySelector("#password");
+    const loginForm = document.querySelector("#login-form");
+    const formMessage = document.querySelector("#form-message");
+
+    function updateThemeControl(theme) {
+      const isDark = theme === "dark";
+      const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+      themeToggle.setAttribute("aria-label", label);
+      themeToggle.setAttribute("title", label);
+    }
+
+    updateThemeControl(document.documentElement.dataset.theme || "light");
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem("nirmaanq-theme", nextTheme);
+      updateThemeControl(nextTheme);
+    });
+
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      formMessage.className = "form-message is-visible";
+
+      const hasValidEmail = emailInput.validity.valid;
+      const hasValidPassword = passwordInput.value.length >= 8;
+
+      if (!hasValidEmail || !hasValidPassword) {
+        formMessage.classList.add("error");
+        formMessage.textContent = "Please enter a valid work email and a password of at least 8 characters.";
+        if (!hasValidEmail) {
+          emailInput.focus();
+        } else {
+          passwordInput.focus();
+        }
+        return;
+      }
+
+      formMessage.classList.add("success");
+      formMessage.textContent = "Login successful. Opening your project workspace...";
+      window.setTimeout(() => {
+        window.location.href = "NirmaanQ-Project-Entry.html";
+      }, 650);
+    });
+  </script>
+</body>
+</html>
