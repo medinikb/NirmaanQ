@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantity Input | NirmaanQ</title>
+  <meta name="description" content="Select a discipline for quantity entry in NirmaanQ." />
+  <script>
+    (() => {
+      const savedTheme = localStorage.getItem("nirmaanq-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
+    })();
+  </script>
+  <style>
+    :root {
+      --navy: #082f57;
+      --navy-soft: #315475;
+      --orange: #f45a16;
+      --orange-dark: #d84a0d;
+      --white: #ffffff;
+      --page: #f6f8fb;
+      --line: #dce4ed;
+      --muted: #66788c;
+      --soft: #edf3f8;
+      --success: #179453;
+      --disabled: #f5f7f9;
+      --shadow: 0 16px 42px rgba(8, 47, 87, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    body {
+      min-height: 100vh;
+      font-family: Arial, Roboto, sans-serif;
+      color: var(--navy);
+      background: var(--page);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 92px 286px minmax(0, 1fr);
+      transition: grid-template-columns 0.24s ease;
+    }
+    .app-shell.discipline-collapsed {
+      grid-template-columns: 92px 72px minmax(0, 1fr);
+    }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 22px 10px;
+      background: linear-gradient(180deg, #082f57 0%, #064477 100%);
+      color: var(--white);
+    }
+    .brand {
+      width: 58px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      background: var(--white);
+      overflow: hidden;
+    }
+    .brand img { width: 54px; height: 42px; object-fit: contain; }
+    .side-nav { width: 100%; display: grid; gap: 10px; }
+    .nav-item {
+      min-height: 64px;
+      display: grid;
+      place-items: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 10px;
+      text-align: center;
+    }
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--white);
+      box-shadow: inset 3px 0 var(--orange);
+    }
+    .nav-item.active .nav-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--orange);
+    }
+    .sidebar-user {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      margin-top: auto;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .discipline-panel {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--line);
+      background: var(--page);
+      transition: width 0.24s ease;
+    }
+    .panel-brand {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 14px 10px 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+    .panel-heading {
+      min-width: 0;
+      flex: 1;
+      transition: opacity 0.15s ease;
+    }
+    .panel-brand h2 {
+      color: var(--navy);
+      font-size: 23px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: normal;
+      white-space: nowrap;
+    }
+    .panel-brand p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .discipline-toggle {
+      width: 44px;
+      min-height: 52px;
+      flex: 0 0 44px;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 2px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--navy);
+      transition: background 0.2s ease, transform 0.24s ease;
+    }
+    .discipline-toggle-label {
+      display: none;
+      color: var(--orange);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .discipline-toggle:hover { background: var(--soft); }
+    .discipline-toggle svg { width: 17px; height: 17px; }
+    .discipline-list {
+      padding: 24px 12px 28px;
+    }
+    .discipline-group + .discipline-group { margin-top: 26px; }
+    .discipline-group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 8px;
+      margin-bottom: 11px;
+    }
+    .discipline-group-head h2 {
+      font-size: 12px;
+      letter-spacing: 0.35px;
+    }
+    .discipline-group-head svg { width: 15px; height: 15px; }
+    .discipline-panel .discipline-card {
+      min-height: 0;
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 15px 14px;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+    .discipline-panel .discipline-card.selected {
+      padding: 14px 13px;
+      border-width: 2px;
+      box-shadow: none;
+    }
+    .discipline-panel .discipline-card:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    .discipline-panel .discipline-number {
+      display: block;
+      font-weight: 700;
+    }
+    .discipline-panel .discipline-copy { display: block; padding: 8px 28px 0 0; }
+    .discipline-panel .discipline-copy h3 { font-size: 16px; }
+    .discipline-panel .discipline-copy p { margin-top: 5px; font-size: 11px; }
+    .discipline-panel .discipline-footer {
+      display: block;
+      padding-top: 7px;
+      border-top: 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .discipline-panel .discipline-state { color: var(--muted); font-weight: 500; }
+    .discipline-panel .discipline-action { display: none; }
+    .discipline-panel .selected-mark {
+      top: 14px;
+      right: 13px;
+      width: 22px;
+      height: 22px;
+    }
+    .discipline-panel .coming-grid { display: grid; grid-template-columns: 1fr; gap: 9px; }
+    .discipline-panel .coming-card {
+      min-height: 0;
+      grid-template-columns: 26px 1fr auto;
+      gap: 8px;
+      padding: 13px 11px;
+      border-radius: 8px;
+    }
+    .discipline-panel .coming-copy h3 { font-size: 12px; }
+    .discipline-panel .coming-copy p {
+      margin-top: 4px;
+      font-size: 10px;
+      text-align: right;
+    }
+    .discipline-collapsed .panel-brand {
+      justify-content: center;
+      padding-inline: 10px;
+    }
+    .discipline-collapsed .panel-heading,
+    .discipline-collapsed .discipline-group-head h2,
+    .discipline-collapsed .discipline-group-head > svg,
+    .discipline-collapsed .discipline-copy,
+    .discipline-collapsed .discipline-footer,
+    .discipline-collapsed .coming-copy,
+    .discipline-collapsed .lock {
+      display: none;
+    }
+    .discipline-collapsed .discipline-toggle svg { transform: rotate(180deg); }
+    .discipline-collapsed .discipline-toggle-label { display: block; }
+    .discipline-collapsed .discipline-toggle {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: var(--white);
+    }
+    .discipline-collapsed .discipline-toggle:hover {
+      border-color: var(--orange-dark);
+      background: var(--orange-dark);
+    }
+    .discipline-collapsed .discipline-toggle-label { color: var(--white); }
+    .discipline-collapsed .discipline-list { padding: 18px 8px; }
+    .discipline-collapsed .discipline-group + .discipline-group { margin-top: 18px; }
+    .discipline-collapsed .discipline-group-head {
+      justify-content: center;
+      height: 1px;
+      margin-bottom: 10px;
+      padding: 0;
+      background: var(--line);
+    }
+    .discipline-collapsed .discipline-panel .discipline-card,
+    .discipline-collapsed .discipline-panel .discipline-card.selected {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+      overflow: visible;
+    }
+    .discipline-collapsed .discipline-panel .discipline-number {
+      font-size: 11px;
+    }
+    .discipline-collapsed .discipline-panel .selected-mark {
+      top: 4px;
+      right: 4px;
+      width: 15px;
+      height: 15px;
+    }
+    .discipline-collapsed .discipline-panel .selected-mark svg {
+      width: 10px;
+      height: 10px;
+    }
+    .discipline-collapsed .discipline-panel .coming-card {
+      position: relative;
+      min-height: 42px;
+      display: grid;
+      grid-template-columns: 1fr;
+      place-items: center;
+      padding: 8px;
+      overflow: visible;
+    }
+    .discipline-collapsed [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      z-index: 50;
+      top: 50%;
+      left: calc(100% + 10px);
+      width: max-content;
+      max-width: 260px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--navy);
+      color: var(--white);
+      box-shadow: 0 10px 24px rgba(8, 47, 87, 0.22);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.35;
+      text-align: left;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(4px, -50%);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .discipline-collapsed [data-tooltip]:hover::after,
+    .discipline-collapsed [data-tooltip]:focus-visible::after {
+      opacity: 1;
+      transform: translate(0, -50%);
+    }
+
+    .workspace { min-width: 0; }
+    .topbar {
+      min-height: 82px;
+      display: grid;
+      grid-template-columns: minmax(420px, 700px) minmax(160px, 1fr);
+      align-items: center;
+      gap: 30px;
+      padding: 12px 34px;
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+    .wordmark { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; }
+    .wordmark span { color: var(--orange); }
+    .wordmark small {
+      display: block;
+      margin-left: 17px;
+      color: var(--navy-soft);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+    .progress {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+    }
+    .progress-step {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .progress-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: calc(50% + 18px);
+      width: calc(100% - 36px);
+      height: 2px;
+      background: var(--line);
+    }
+    .progress-step.complete::after { background: var(--orange); }
+    .step-number {
+      width: 30px;
+      height: 30px;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid #bdcad7;
+      border-radius: 50%;
+      background: var(--white);
+    }
+    .progress-step.complete .step-number {
+      border-color: var(--success);
+      background: var(--success);
+      color: var(--white);
+    }
+    .progress-step.active { color: var(--navy); }
+    .progress-step.active .step-number {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: var(--white);
+    }
+    .top-actions { justify-self: end; display: flex; align-items: center; gap: 12px; }
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--white);
+      color: var(--navy);
+    }
+    .theme-toggle-icon {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      box-shadow: inset -6px -3px 0 0 currentColor;
+    }
+    .user-badge {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .content {
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 34px 38px 48px;
+    }
+    .page-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+    .page-head h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.8px; }
+    .title-separator { color: var(--orange); }
+    .page-head p { max-width: 680px; margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .option-guidance {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: max-content;
+      max-width: 100%;
+      margin-top: 10px;
+      padding: 11px 16px;
+      border: 1px solid #ffc6ad;
+      border-radius: 999px;
+      background: #fff7f3;
+      color: #d94b0b;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    .option-guidance::before {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
+      background: var(--orange);
+      content: "";
+    }
+    .project-strip {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr 1fr;
+      margin-bottom: 28px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--white);
+    }
+    .project-detail {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      padding: 0 18px;
+      border-right: 1px solid var(--line);
+    }
+    .project-detail:first-child { padding-left: 0; }
+    .project-detail:last-child { border-right: 0; }
+    .project-detail svg { margin-top: 4px; color: var(--navy-soft); }
+    .project-detail span { display: block; color: var(--muted); font-size: 11px; }
+    .project-detail strong { display: block; margin-top: 2px; font-size: 13px; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 14px;
+    }
+    .section-head h2 { font-size: 13px; letter-spacing: 0.7px; }
+    .section-head p { color: var(--muted); font-size: 12px; }
+    .active-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 34px;
+    }
+    .discipline-card {
+      position: relative;
+      min-height: 210px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      color: var(--navy);
+      text-align: left;
+      box-shadow: var(--shadow);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .discipline-card:hover {
+      transform: translateY(-2px);
+      border-color: #f7a379;
+      box-shadow: 0 20px 46px rgba(8, 47, 87, 0.12);
+    }
+    .discipline-card.selected {
+      border: 2px solid var(--orange);
+      padding: 23px;
+      box-shadow: 0 18px 44px rgba(244, 90, 22, 0.12);
+    }
+    .discipline-number { color: var(--orange); font-size: 12px; font-weight: 800; }
+    .selected-mark {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--orange);
+      color: var(--white);
+    }
+    .selected-mark svg { width: 16px; height: 16px; stroke-width: 2.4; }
+    .selected-mark[hidden] { display: none; }
+    .discipline-copy { padding: 18px 44px 18px 0; }
+    .discipline-copy h3 { font-size: 21px; line-height: 1.25; }
+    .discipline-copy p { max-width: 520px; margin-top: 9px; color: var(--muted); font-size: 13px; }
+    .discipline-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 17px;
+      border-top: 1px solid var(--line);
+    }
+    .discipline-state { color: var(--success); font-size: 12px; font-weight: 800; }
+    .discipline-action { display: flex; align-items: center; gap: 7px; color: var(--orange); font-size: 12px; font-weight: 800; }
+    .discipline-action svg { width: 15px; height: 15px; }
+
+    .coming-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .coming-card {
+      min-height: 116px;
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      align-items: start;
+      gap: 11px;
+      padding: 18px;
+      border: 1px solid #e1e6eb;
+      border-radius: 10px;
+      background: var(--disabled);
+      color: #8493a2;
+    }
+    .coming-number { color: #8fa0b0; font-size: 12px; font-weight: 400; }
+    .coming-copy h3 { color: #6f8193; font-size: 14px; line-height: 1.3; }
+    .coming-copy p { margin-top: 7px; color: #98a5b1; font-size: 11px; }
+    .lock { color: #96a3af; }
+    .lock svg { width: 16px; height: 16px; }
+
+    .selection-bar {
+      position: sticky;
+      bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 26px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 16px 38px rgba(8, 47, 87, 0.14);
+      backdrop-filter: blur(12px);
+    }
+    .selection-info span { display: block; color: var(--muted); font-size: 11px; }
+    .selection-info strong { display: block; margin-top: 2px; font-size: 14px; }
+    .button-group { display: flex; gap: 10px; }
+    .button {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 20px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .button-secondary { border-color: var(--line); background: var(--white); color: var(--navy); }
+    .button-primary { background: var(--orange); color: var(--white); }
+    .button-primary:hover { background: var(--orange-dark); }
+    .review-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+    .discipline-workspace {
+      min-height: 430px;
+      display: grid;
+      place-items: center;
+      padding: 42px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .workspace-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 18px;
+      border-radius: 14px;
+      background: #fff1e9;
+      color: var(--orange);
+    }
+    .workspace-icon svg { width: 29px; height: 29px; }
+    .discipline-workspace h2 { font-size: 23px; }
+    .discipline-workspace p {
+      max-width: 560px;
+      margin: 10px auto 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .civil-upload {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .civil-step + .civil-step { margin-top: 22px; }
+    .civil-step-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: var(--navy);
+      font-size: 19px;
+      font-weight: 700;
+    }
+    .civil-step-number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      flex: 0 0 30px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+    .upload-intro {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      color: var(--navy);
+      font-size: 16px;
+      font-weight: 400;
+    }
+    .upload-intro::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      flex: 0 0 8px;
+      border-radius: 50%;
+      background: var(--orange);
+    }
+    .upload-body { padding: 34px 24px 24px; }
+    .template-download-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border: 1px solid #ffd4bf;
+      border-radius: 10px;
+      background: #fff8f4;
+    }
+    .template-download-copy strong {
+      display: block;
+      color: var(--navy);
+      font-size: 14px;
+    }
+    .template-download-copy span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .template-download-button {
+      flex: 0 0 auto;
+      min-height: 42px;
+    }
+    .upload-dropzone {
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+      padding: 30px;
+      border: 2px dashed #d8dfe6;
+      border-radius: 14px;
+      background: #fdfefe;
+      color: var(--muted);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .upload-dropzone:hover,
+    .upload-dropzone.is-dragging {
+      border-color: var(--orange);
+      background: #fff8f4;
+    }
+    .upload-dropzone svg {
+      width: 54px;
+      height: 54px;
+      margin-bottom: 15px;
+      color: #7a7f83;
+      stroke-width: 1.7;
+    }
+    .upload-dropzone strong {
+      display: block;
+      color: #111111;
+      font-size: 17px;
+    }
+    .upload-link-text { color: #00a968; }
+    .upload-file-type {
+      display: inline;
+      color: var(--orange);
+      font-weight: 700;
+    }
+    .upload-file-note {
+      display: inline-block !important;
+      white-space: nowrap;
+    }
+    .upload-file-note .upload-file-type {
+      display: inline !important;
+    }
+    .upload-dropzone span {
+      display: block;
+      margin-top: 3px;
+      font-size: 13px;
+    }
+    .upload-file-name {
+      min-height: 20px;
+      margin-top: 12px;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .upload-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 20px 24px;
+      border-top: 1px solid var(--line);
+    }
+    .generation-result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #b9e5cf;
+      border-radius: 10px;
+      background: #f1fbf6;
+    }
+    .generation-result[hidden] { display: none; }
+    .generation-confirmation {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #087443;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .generation-confirmation::before {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      flex: 0 0 20px;
+      place-items: center;
+      border-radius: 50%;
+      background: #17a765;
+      color: #ffffff;
+      content: "✓";
+      font-size: 12px;
+    }
+    .generation-result-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .generation-result .button { min-height: 38px; }
+    .button-view {
+      border: 1px solid var(--orange);
+      background: var(--orange);
+      color: #ffffff;
+    }
+    .button-view:hover { background: var(--orange-dark); }
+    .estimate-button:disabled {
+      background: #9b9b9b;
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+    .estimate-button:disabled:hover {
+      background: #9b9b9b;
+      transform: none;
+    }
+    .civil-ai {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .civil-ai-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: var(--navy);
+      font-size: 19px;
+      font-weight: 700;
+    }
+    .civil-ai-number {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      flex: 0 0 30px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+    .civil-ai-panel {
+      padding: 18px 20px;
+      border: 2px solid #1b9bd7;
+      border-radius: 14px;
+      background: #eef8fe;
+    }
+    .civil-ai-label {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--navy);
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .civil-ai-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .civil-ai-input {
+      width: 100%;
+      min-height: 82px;
+      resize: vertical;
+      padding: 13px 15px;
+      border: 1px solid #cbd5df;
+      border-radius: 10px;
+      color: var(--navy);
+      background: #ffffff;
+      font: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .civil-ai-input::placeholder { color: #8c99a8; }
+    .civil-ai-input:focus {
+      border-color: var(--orange);
+      outline: 3px solid rgba(255, 91, 21, 0.14);
+    }
+    .civil-ai-generate {
+      align-self: stretch;
+      min-width: 160px;
+      justify-content: center;
+    }
+    .civil-ai-help {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .civil-ai-status {
+      min-height: 18px;
+      margin-top: 8px;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .piping-step + .piping-step { margin-top: 22px; }
+    .piping-panel {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .piping-intro {
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .piping-field-label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .pms-select-wrap { max-width: none; }
+    .pms-select {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 42px 0 14px;
+      border: 1px solid #cbd5df;
+      border-radius: 10px;
+      background-color: #ffffff;
+      color: var(--navy);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .pms-select:focus {
+      border-color: var(--orange);
+      outline: 3px solid rgba(255, 91, 21, 0.14);
+    }
+    .piping-input-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .piping-input-group label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .piping-input,
+    .piping-textarea {
+      width: 100%;
+      border: 1px solid #cbd5df;
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--navy);
+      font: inherit;
+      font-size: 14px;
+    }
+    .piping-input {
+      min-height: 48px;
+      padding: 0 14px;
+    }
+    .piping-textarea {
+      min-height: 142px;
+      padding: 14px 15px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    .piping-input::placeholder,
+    .piping-textarea::placeholder { color: #939fac; }
+    .piping-input:focus,
+    .piping-textarea:focus {
+      border-color: var(--orange);
+      outline: 3px solid rgba(255, 91, 21, 0.14);
+    }
+    .piping-mto-frame-wrap {
+      overflow: hidden;
+      margin-top: 4px;
+      border: 1px solid #cbd5df;
+      border-radius: 12px;
+      background: #f5f5f5;
+    }
+    .piping-mto-frame {
+      width: 100%;
+      height: 390px;
+      display: block;
+      border: 0;
+      background: #ffffff;
+      transition: height 0.2s ease;
+    }
+    .piping-manual { margin-top: 2px; }
+    .piping-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .piping-status {
+      min-height: 18px;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .piping-ai-panel {
+      padding: 18px 20px;
+      border: 2px solid #1b9bd7;
+      border-radius: 14px;
+      background: #eef8fe;
+    }
+    .piping-ai-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .piping-ai-entry .piping-textarea { min-height: 126px; }
+    .piping-ai-generate {
+      min-width: 160px;
+      justify-content: center;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+    }
+    html[data-theme="dark"] body {
+      color: #e5eef6;
+      background: #07131f;
+    }
+    html[data-theme="dark"] .discipline-panel,
+    html[data-theme="dark"] .topbar,
+    html[data-theme="dark"] .project-strip,
+    html[data-theme="dark"] .discipline-card,
+    html[data-theme="dark"] .discipline-workspace,
+    html[data-theme="dark"] .civil-upload,
+    html[data-theme="dark"] .civil-ai,
+    html[data-theme="dark"] .piping-panel,
+    html[data-theme="dark"] .selection-bar,
+    html[data-theme="dark"] .icon-button,
+    html[data-theme="dark"] .button-secondary {
+      background: #0d2030;
+      color: #e5eef6;
+      border-color: #294256;
+    }
+    html[data-theme="dark"] .civil-ai-heading,
+    html[data-theme="dark"] .civil-step-heading,
+    html[data-theme="dark"] .civil-ai-label {
+      color: #f2f7fb;
+    }
+    html[data-theme="dark"] .civil-ai-panel {
+      border-color: #287da4;
+      background: #102536;
+    }
+    html[data-theme="dark"] .civil-ai-input {
+      border-color: #36536a;
+      color: #e5eef6;
+      background: #07131f;
+    }
+    html[data-theme="dark"] .civil-ai-help { color: #91a6b8; }
+    html[data-theme="dark"] .template-download-row {
+      border-color: #70442e;
+      background: #182a38;
+    }
+    html[data-theme="dark"] .template-download-copy strong { color: #f2f7fb; }
+    html[data-theme="dark"] .template-download-copy span { color: #91a6b8; }
+    html[data-theme="dark"] .piping-field-label,
+    html[data-theme="dark"] .piping-input-group label {
+      color: #f2f7fb;
+    }
+    html[data-theme="dark"] .piping-intro { color: #91a6b8; }
+    html[data-theme="dark"] .pms-select {
+      border-color: #36536a;
+      background: #07131f;
+      color: #dce7ef;
+    }
+    html[data-theme="dark"] .piping-input,
+    html[data-theme="dark"] .piping-textarea {
+      border-color: #36536a;
+      background: #07131f;
+      color: #e5eef6;
+    }
+    html[data-theme="dark"] .piping-mto-frame-wrap {
+      border-color: #36536a;
+      background: #07131f;
+    }
+    html[data-theme="dark"] .piping-ai-panel {
+      border-color: #287da4;
+      background: #102536;
+    }
+    html[data-theme="dark"] .discipline-panel { background: #07131f; }
+    html[data-theme="dark"] .panel-brand { background: #0d2030; }
+    html[data-theme="dark"] .panel-brand,
+    html[data-theme="dark"] .topbar,
+    html[data-theme="dark"] .discipline-panel,
+    html[data-theme="dark"] .project-detail,
+    html[data-theme="dark"] .discipline-footer {
+      border-color: #294256;
+    }
+    html[data-theme="dark"] .page-head h1,
+    html[data-theme="dark"] .discipline-copy h3,
+    html[data-theme="dark"] .discipline-workspace h2,
+    html[data-theme="dark"] .selection-info strong,
+    html[data-theme="dark"] .project-detail strong,
+    html[data-theme="dark"] .discipline-group-head h2,
+    html[data-theme="dark"] .panel-brand h2 {
+      color: #f2f7fb;
+    }
+    html[data-theme="dark"] .panel-brand p { color: #91a6b8; }
+    html[data-theme="dark"] .option-guidance {
+      border-color: #ffc6ad;
+      background: #fff7f3;
+      color: #d94b0b;
+    }
+    html[data-theme="dark"] .page-head p,
+    html[data-theme="dark"] .discipline-copy p,
+    html[data-theme="dark"] .discipline-workspace p,
+    html[data-theme="dark"] .selection-info span,
+    html[data-theme="dark"] .project-detail span,
+    html[data-theme="dark"] .review-note,
+    html[data-theme="dark"] .discipline-state {
+      color: #91a6b8;
+    }
+    html[data-theme="dark"] .coming-card {
+      background: #102536;
+      border-color: #294256;
+      color: #8499aa;
+    }
+    html[data-theme="dark"] .coming-copy h3 { color: #9eb0bf; }
+    html[data-theme="dark"] .coming-copy p { color: #758b9e; }
+    html[data-theme="dark"] .discipline-card.selected {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 1px rgba(244, 90, 22, 0.15);
+    }
+    html[data-theme="dark"] .workspace-icon { background: #312116; }
+    html[data-theme="dark"] .upload-intro,
+    html[data-theme="dark"] .upload-actions {
+      border-color: #294256;
+    }
+    html[data-theme="dark"] .upload-intro { color: #f2f7fb; }
+    html[data-theme="dark"] .upload-actions { color: #91a6b8; }
+    html[data-theme="dark"] .generation-result {
+      border-color: #266348;
+      background: #102b21;
+    }
+    html[data-theme="dark"] .generation-confirmation { color: #8ee0b6; }
+    html[data-theme="dark"] .upload-dropzone {
+      border-color: #36536a;
+      background: #0a1a28;
+      color: #91a6b8;
+    }
+    html[data-theme="dark"] .upload-dropzone:hover,
+    html[data-theme="dark"] .upload-dropzone.is-dragging {
+      border-color: var(--orange);
+      background: #1e1b18;
+    }
+    html[data-theme="dark"] .upload-dropzone strong { color: #ffffff; }
+    html[data-theme="dark"] .progress-step { color: #8da2b4; }
+    html[data-theme="dark"] .progress-step.active {
+      color: #ffffff;
+      font-weight: 700;
+    }
+    html[data-theme="dark"] .progress-step.complete { color: #b8c8d5; }
+    html[data-theme="dark"] .progress-step:not(.active):not(.complete) .step-number {
+      border-color: #36536a;
+      background: #10283a;
+      color: #ffffff;
+    }
+    html[data-theme="dark"] .discipline-toggle {
+      background: #102536;
+      border-color: #294256;
+      color: #e5eef6;
+    }
+    html[data-theme="dark"] .discipline-toggle:hover { background: #173044; }
+    html[data-theme="dark"] .discipline-collapsed .discipline-toggle {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: var(--white);
+    }
+    html[data-theme="dark"] .discipline-collapsed .discipline-toggle:hover {
+      border-color: var(--orange-dark);
+      background: var(--orange-dark);
+    }
+    html[data-theme="dark"] .discipline-collapsed [data-tooltip]::after {
+      border-color: #36536a;
+      background: #173044;
+    }
+    html[data-theme="dark"] .theme-toggle-icon {
+      background: var(--orange);
+      box-shadow: none;
+      transform: scale(0.82);
+    }
+
+    @media (max-width: 1050px) {
+      .app-shell { grid-template-columns: 78px 250px minmax(0, 1fr); }
+      .topbar { grid-template-columns: 1fr auto; padding-inline: 22px; }
+      .coming-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 10px 16px;
+      }
+      .brand { width: 62px; height: 44px; margin: 0; }
+      .side-nav, .sidebar-user { display: none; }
+      .discipline-panel {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .panel-brand { display: none; }
+      .discipline-list { padding: 18px; }
+      .discipline-panel .coming-grid { grid-template-columns: 1fr; }
+      .topbar { min-height: 72px; grid-template-columns: 1fr auto; }
+      .progress { grid-column: 1 / -1; grid-row: 2; margin-top: 8px; }
+      .top-actions { grid-column: 2; grid-row: 1; }
+      .content { padding: 26px 18px 34px; }
+      .page-head { align-items: flex-start; flex-direction: column; }
+      .option-guidance { width: 100%; max-width: 100%; border-radius: 14px; white-space: normal; }
+      .project-strip, .active-grid, .coming-grid { grid-template-columns: 1fr; }
+      .project-detail {
+        padding: 12px 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .project-detail:first-child { padding-top: 0; }
+      .project-detail:last-child { padding-bottom: 0; border-bottom: 0; }
+      .selection-bar { align-items: stretch; flex-direction: column; }
+      .selection-bar { position: static; }
+      .button-group { display: grid; grid-template-columns: 1fr; }
+      .civil-ai-entry { grid-template-columns: 1fr; }
+      .civil-ai-generate { min-height: 52px; }
+      .piping-input-grid,
+      .piping-ai-entry { grid-template-columns: 1fr; }
+      .piping-ai-generate { min-height: 52px; }
+      .piping-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .generation-result {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .generation-result-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .template-download-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .template-download-button { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="NirmaanQ.html" aria-label="NirmaanQ home">
+        <img src="NirmaanQ-logo-final.png" alt="NirmaanQ" />
+      </a>
+      <nav class="side-nav">
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h7l2 2h9v10H3z"/><path d="M3 7V5h7l2 2"/></svg><span>Projects</span></a>
+        <a class="nav-item active" href="NirmaanQ-Project-Entry.html" aria-current="page">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span>New Estimate</span>
+        </a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg><span>Estimates</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Reports</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.5 1A7 7 0 0 0 15 6l-.4-2.7h-4L10 6a7 7 0 0 0-1.4 1L6 6 4 9.4 6 11a7 7 0 0 0 0 2l-2 1.6L6 18l2.6-1a7 7 0 0 0 1.4 1l.5 2.7h4L15 18a7 7 0 0 0 1.4-1l2.5 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/></svg><span>Settings</span></a>
+      </nav>
+      <div class="sidebar-user" aria-label="Signed in as N. Rao">NR</div>
+    </aside>
+
+    <aside class="discipline-panel" aria-label="Discipline selection">
+      <div class="panel-brand">
+        <div class="panel-heading">
+          <h2>Select Disciplines</h2>
+          <p>Choose any one discipline at a time.</p>
+        </div>
+        <button class="discipline-toggle" type="button" aria-label="Close discipline sidebar" aria-expanded="true" title="Close discipline sidebar">
+          <span class="discipline-toggle-label">Select</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="discipline-list">
+        <section class="discipline-group" aria-labelledby="active-panel-title">
+          <div class="discipline-group-head">
+            <h2 id="active-panel-title">ACTIVE DISCIPLINES</h2>
+          </div>
+
+          <button class="discipline-card" type="button" data-discipline="Civil & Structural Works" data-tooltip="Civil & Structural Works" title="Civil & Structural Works">
+            <span class="discipline-number">01</span>
+            <span class="selected-mark" aria-hidden="true" hidden><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span>
+            <span class="discipline-copy">
+              <h3>Civil &amp; Structural Works</h3>
+              <p>Upload foundation drawings | BOQs</p>
+            </span>
+          </button>
+
+          <button class="discipline-card" type="button" data-discipline="Piping Works" data-tooltip="Piping Works" title="Piping Works">
+            <span class="discipline-number">02</span>
+            <span class="selected-mark" aria-hidden="true" hidden><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg></span>
+            <span class="discipline-copy">
+              <h3>Piping Works</h3>
+              <p>Line items, fittings, valves etc.</p>
+            </span>
+            <span class="discipline-footer"><span class="discipline-state">0 items &nbsp;•&nbsp; 0% complete</span></span>
+          </button>
+        </section>
+
+        <section class="discipline-group" aria-labelledby="coming-panel-title">
+          <div class="discipline-group-head">
+            <h2 id="coming-panel-title">COMING SOON</h2>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"/></svg>
+          </div>
+          <div class="coming-grid">
+            <div class="coming-card" aria-disabled="true" tabindex="0" data-tooltip="Piling / Stone Column / Ground Improvement" title="Piling / Stone Column / Ground Improvement">
+              <span class="coming-number">03</span>
+              <div class="coming-copy"><h3>Piling / Stone Column / Ground Improvement</h3><p>Coming Soon</p></div>
+              <span class="lock"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+            </div>
+            <div class="coming-card" aria-disabled="true" tabindex="0" data-tooltip="Mechanical Works" title="Mechanical Works">
+              <span class="coming-number">04</span>
+              <div class="coming-copy"><h3>Mechanical Works</h3><p>Coming Soon</p></div>
+            </div>
+            <div class="coming-card" aria-disabled="true" tabindex="0" data-tooltip="Electrical Works" title="Electrical Works">
+              <span class="coming-number">05</span>
+              <div class="coming-copy"><h3>Electrical Works</h3><p>Coming Soon</p></div>
+            </div>
+            <div class="coming-card" aria-disabled="true" tabindex="0" data-tooltip="Instrumentation Works" title="Instrumentation Works">
+              <span class="coming-number">06</span>
+              <div class="coming-copy"><h3>Instrumentation Works</h3><p>Coming Soon</p></div>
+            </div>
+            <div class="coming-card" aria-disabled="true" tabindex="0" data-tooltip="Consultancy & Services" title="Consultancy & Services">
+              <span class="coming-number">07</span>
+              <div class="coming-copy"><h3>Consultancy &amp; Services</h3><p>Coming Soon</p></div>
+            </div>
+            <div class="coming-card" aria-disabled="true" tabindex="0" data-tooltip="Supply of Equipment" title="Supply of Equipment">
+              <span class="coming-number">08</span>
+              <div class="coming-copy"><h3>Supply of Equipment</h3><p>Coming Soon</p></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div class="progress" aria-label="Estimate creation progress">
+          <div class="progress-step complete"><span class="step-number">✓</span><span>Project details</span></div>
+          <div class="progress-step active"><span class="step-number">2</span><span>Quantity input</span></div>
+          <a class="progress-step" href="NirmaanQ-Review-Estimate.html?v=20260612-10"><span class="step-number">3</span><span>Review estimate</span></a>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch to dark mode">
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+          </button>
+          <button class="icon-button" type="button" aria-label="Help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.1 2.3c-.9.3-.9.9-.9 1.7"/><path d="M12 17h.01"/></svg></button>
+          <div class="user-badge">NR</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="project-strip" aria-label="Current project">
+          <div class="project-detail">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V5h16v15"/><path d="M8 9h2M14 9h2M8 13h2M14 13h2M9 20v-3h6v3"/></svg>
+            <div><span>Project name</span><strong id="project-name">New Tank Farm Development</strong></div>
+          </div>
+          <div class="project-detail">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg>
+            <div><span>Project code</span><strong id="project-code">MOC-2026-014</strong></div>
+          </div>
+          <div class="project-detail">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <div><span>Location</span><strong id="project-location">Numaligarh</strong></div>
+          </div>
+        </section>
+
+        <div class="page-head" id="discipline-selection-prompt">
+          <div>
+            <h1>Quantity Input</h1>
+            <p>Select discipline to begin.</p>
+          </div>
+        </div>
+
+        <div class="page-head" id="discipline-page-head" hidden>
+          <div>
+            <h1 id="quantity-page-title"></h1>
+            <p>Select the discipline you want to work on.</p>
+            <div class="option-guidance">Choose one or more input options. Completing all options is not required.</div>
+          </div>
+        </div>
+
+        <section class="civil-step" id="civil-upload" aria-labelledby="civil-upload-title" hidden>
+          <h2 class="civil-step-heading" id="civil-upload-title">
+            <span class="civil-step-number" aria-hidden="true">a</span>
+            Upload Foundation Drawing
+          </h2>
+          <div class="civil-upload">
+            <div class="upload-body">
+              <input id="civil-pdf-input" type="file" accept="application/pdf,.pdf" hidden />
+              <label class="upload-dropzone" id="civil-dropzone" for="civil-pdf-input">
+                <span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.4 17.5A5 5 0 0 0 18 8.2 7 7 0 0 0 4.3 10.7 4.5 4.5 0 0 0 5.5 19H8"/></svg>
+                  <strong>Click to upload or drag and drop</strong>
+                  <span class="upload-file-note"><span class="upload-file-type">PDF</span> files only</span>
+                </span>
+              </label>
+              <p class="upload-file-name" id="civil-file-name" role="status" aria-live="polite"></p>
+            </div>
+            <div class="upload-actions">
+              <button class="button button-primary estimate-button" id="generate-estimate" type="button" disabled>
+                Generate Cost Estimate
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+              </button>
+              <div class="generation-result" id="civil-pdf-result" hidden>
+                <span class="generation-confirmation">Estimate generated</span>
+                <div class="generation-result-actions">
+                  <a class="button button-view" href="NirmaanQ-Review-Estimate.html">View Extracted Items</a>
+                  <button class="button button-secondary edit-generation" type="button" data-generate="generate-estimate" data-focus="civil-dropzone">Edit &amp; Regenerate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="civil-step" id="civil-excel-upload" aria-labelledby="civil-excel-title" hidden>
+          <h2 class="civil-step-heading" id="civil-excel-title">
+            <span class="civil-step-number" aria-hidden="true">b</span>
+            Upload BOQs in Excel Template (ANNEXURE-2)
+          </h2>
+          <div class="civil-upload">
+            <div class="upload-body">
+              <div class="template-download-row">
+                <div class="template-download-copy">
+                  <strong>Need the approved BOQ format?</strong>
+                  <span>Download the Excel template, complete the BOQ details, then upload it below.</span>
+                </div>
+                <a
+                  class="button button-secondary template-download-button"
+                  href="NirmaanQ-Civil-BOQ-Template-ANNEXURE-2.xlsx"
+                  download
+                >
+                  Download Excel Template
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                </a>
+              </div>
+              <input id="civil-excel-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
+              <label class="upload-dropzone" id="civil-excel-dropzone" for="civil-excel-input">
+                <span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.4 17.5A5 5 0 0 0 18 8.2 7 7 0 0 0 4.3 10.7 4.5 4.5 0 0 0 5.5 19H8"/></svg>
+                  <strong>Click to upload or drag and drop</strong>
+                  <span class="upload-file-note"><span class="upload-file-type">.xlsx</span> files only</span>
+                </span>
+              </label>
+              <p class="upload-file-name" id="civil-excel-file-name" role="status" aria-live="polite"></p>
+            </div>
+            <div class="upload-actions">
+              <button class="button button-primary estimate-button" id="generate-excel-estimate" type="button" disabled>
+                Generate Cost Estimate
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+              </button>
+              <div class="generation-result" id="civil-excel-result" hidden>
+                <span class="generation-confirmation">Estimate generated</span>
+                <div class="generation-result-actions">
+                  <a class="button button-view" href="NirmaanQ-Review-Estimate.html">View Extracted Items</a>
+                  <button class="button button-secondary edit-generation" type="button" data-generate="generate-excel-estimate" data-focus="civil-excel-dropzone">Edit &amp; Regenerate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="civil-ai civil-step" id="civil-ai" aria-labelledby="civil-ai-title" hidden>
+          <h2 class="civil-ai-heading" id="civil-ai-title">
+            <span class="civil-ai-number" aria-hidden="true">c</span>
+            AI-Assisted Civil &amp; Structural Estimation
+          </h2>
+          <div class="civil-ai-panel">
+            <label class="civil-ai-label" for="civil-ai-requirement">
+              Describe your Civil &amp; Structural estimation requirements
+            </label>
+            <div class="civil-ai-entry">
+              <textarea
+                class="civil-ai-input"
+                id="civil-ai-requirement"
+                wrap="off"
+                placeholder="e.g., Prepare Class 3 civil cost estimates for a horizontal vessel foundation&#10;(Capacity: 50 m³ | Design Pressure: 30 kg/cm²g)."
+              ></textarea>
+              <button class="button button-primary civil-ai-generate" id="civil-ai-generate" type="button">
+                Generate Cost Estimate
+              </button>
+            </div>
+            <p class="civil-ai-help">
+              AI will help identify civil work items, suggest quantities and map them to the relevant BOQ and rate references.
+            </p>
+            <p class="civil-ai-status" id="civil-ai-status" role="status" aria-live="polite"></p>
+            <div class="generation-result" id="civil-ai-result" hidden>
+              <span class="generation-confirmation">Estimate generated</span>
+              <div class="generation-result-actions">
+                <a class="button button-view" href="NirmaanQ-Review-Estimate.html">View Estimate</a>
+                <button class="button button-secondary edit-generation" type="button" data-generate="civil-ai-generate" data-focus="civil-ai-requirement">Edit &amp; Regenerate</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="piping-step" id="piping-mto" aria-labelledby="piping-mto-title" hidden>
+          <h2 class="civil-step-heading" id="piping-mto-title">
+            <span class="civil-step-number" aria-hidden="true">a</span>
+            Enter Piping Quantities
+          </h2>
+          <div class="piping-panel">
+            <div class="piping-input-grid">
+              <div class="piping-input-group pms-select-wrap">
+                <label for="pms-select">Select Pipe Material Spec</label>
+                <select class="pms-select" id="pms-select">
+                  <option value="">Choose Pipe Material Spec</option>
+                  <option value="Piping Mat. Specification (NRL)">Piping Mat. Specification (NRL)</option>
+                  <option value="PMS DHDT">PMS DHDT</option>
+                  <option value="PMS (Wax Project)">PMS (Wax Project)</option>
+                  <option value="SMT PMS">SMT PMS</option>
+                  <option value="TOYO NRL PMS MSP">TOYO NRL PMS MSP</option>
+                </select>
+              </div>
+              <div class="piping-input-group">
+                <label for="pipe-class-name">Pipe Class Name</label>
+                <input class="piping-input" id="pipe-class-name" type="text" placeholder="e.g., A10A" />
+              </div>
+              <div class="piping-input-group">
+                <label for="process-temperature">Design Temperature (°C)</label>
+                <input class="piping-input" id="process-temperature" type="number" placeholder="e.g., 250" />
+              </div>
+            </div>
+
+            <div class="piping-mto-frame-wrap">
+              <iframe
+                class="piping-mto-frame"
+                id="piping-mto-frame"
+                src="Piping_MTO.html"
+                title="Piping Material Take-Off quantity entry"
+                loading="lazy"
+              ></iframe>
+            </div>
+
+            <div class="piping-actions">
+              <p class="piping-status" id="piping-mto-status" role="status" aria-live="polite"></p>
+              <button class="button button-primary" id="generate-piping-mto" type="button">
+                Generate Cost Estimate
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+              </button>
+              <div class="generation-result" id="piping-mto-result" hidden>
+                <span class="generation-confirmation">Estimate generated</span>
+                <div class="generation-result-actions">
+                  <a class="button button-view" href="NirmaanQ-Review-Estimate.html">View Estimate</a>
+                  <button class="button button-secondary edit-generation" type="button" data-generate="generate-piping-mto" data-focus="pms-select">Edit &amp; Regenerate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="piping-step" id="piping-ai" aria-labelledby="piping-ai-title" hidden>
+          <h2 class="civil-step-heading" id="piping-ai-title">
+            <span class="civil-step-number" aria-hidden="true">b</span>
+            AI-Assisted Piping Estimation
+          </h2>
+          <div class="piping-panel">
+            <div class="piping-ai-panel">
+              <div class="piping-input-grid">
+                <div class="piping-input-group pms-select-wrap">
+                  <label for="piping-ai-pms-select">Select Pipe Material Spec</label>
+                  <select class="pms-select" id="piping-ai-pms-select">
+                    <option value="">Choose Pipe Material Spec</option>
+                    <option value="Piping Mat. Specification (NRL)">Piping Mat. Specification (NRL)</option>
+                    <option value="PMS DHDT">PMS DHDT</option>
+                    <option value="PMS (Wax Project)">PMS (Wax Project)</option>
+                    <option value="SMT PMS">SMT PMS</option>
+                    <option value="TOYO NRL PMS MSP">TOYO NRL PMS MSP</option>
+                  </select>
+                </div>
+                <div class="piping-input-group">
+                  <label for="piping-ai-pipe-class">Pipe Class Name</label>
+                  <input class="piping-input" id="piping-ai-pipe-class" type="text" placeholder="e.g., A10A" />
+                </div>
+                <div class="piping-input-group">
+                  <label for="piping-ai-design-temperature">Design Temperature (°C)</label>
+                  <input class="piping-input" id="piping-ai-design-temperature" type="number" placeholder="e.g., 250" />
+                </div>
+              </div>
+              <label class="piping-field-label" for="piping-ai-requirement">
+                Describe your piping items
+              </label>
+              <div class="piping-ai-entry">
+                <textarea
+                  class="piping-textarea"
+                  id="piping-ai-requirement"
+                  placeholder="e.g.,&#10;1. Pipe size with length: 2&quot; (length = 100 m) and 10&quot; (length = 300 m)&#10;2. 90° elbow: 2&quot; (quantity = 50 nos.) and 10&quot; (quantity = 80 nos.)&#10;3. Gate valve: 2&quot; (quantity = 5 nos.) and 10&quot; (quantity = 9 nos.)"
+                ></textarea>
+                <button class="button button-primary piping-ai-generate" id="piping-ai-generate" type="button">
+                  Generate Cost Estimate
+                </button>
+              </div>
+              <p class="civil-ai-help">
+                AI will select material grades and estimate the piping service scope.
+              </p>
+              <p class="piping-status" id="piping-ai-status" role="status" aria-live="polite"></p>
+              <div class="generation-result" id="piping-ai-result" hidden>
+                <span class="generation-confirmation">Estimate generated</span>
+                <div class="generation-result-actions">
+                  <a class="button button-view" href="NirmaanQ-Review-Estimate.html">View Estimate</a>
+                  <button class="button button-secondary edit-generation" type="button" data-generate="piping-ai-generate" data-focus="piping-ai-requirement">Edit &amp; Regenerate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="discipline-workspace" id="discipline-workspace" aria-labelledby="workspace-discipline-title" hidden>
+          <div>
+            <span class="workspace-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 20V5h16v15"/><path d="M8 9h2M14 9h2M8 13h2M14 13h2M9 20v-3h6v3"/></svg>
+            </span>
+            <h2 id="workspace-discipline-title"></h2>
+            <p id="workspace-description"></p>
+          </div>
+        </section>
+
+        <div class="selection-bar" id="selection-bar" hidden>
+          <div class="selection-info">
+            <span>Selected discipline</span>
+            <strong id="selected-discipline"></strong>
+          </div>
+          <div class="button-group">
+            <a class="button button-secondary" href="NirmaanQ-Project-Entry.html">Back to project details</a>
+            <button class="button button-primary" id="continue-button" type="button"></button>
+          </div>
+        </div>
+        <p class="review-note" id="review-status" role="status" aria-live="polite"></p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const disciplineCards = document.querySelectorAll(".discipline-card");
+    const selectedDiscipline = document.querySelector("#selected-discipline");
+    const continueButton = document.querySelector("#continue-button");
+    const reviewStatus = document.querySelector("#review-status");
+    const workspaceDisciplineTitle = document.querySelector("#workspace-discipline-title");
+    const workspaceDescription = document.querySelector("#workspace-description");
+    const quantityPageTitle = document.querySelector("#quantity-page-title");
+    const disciplinePageHead = document.querySelector("#discipline-page-head");
+    const disciplineWorkspace = document.querySelector("#discipline-workspace");
+    const selectionBar = document.querySelector("#selection-bar");
+    const disciplineSelectionPrompt = document.querySelector("#discipline-selection-prompt");
+    const civilUpload = document.querySelector("#civil-upload");
+    const civilPdfInput = document.querySelector("#civil-pdf-input");
+    const civilDropzone = document.querySelector("#civil-dropzone");
+    const civilFileName = document.querySelector("#civil-file-name");
+    const generateEstimate = document.querySelector("#generate-estimate");
+    const civilPdfResult = document.querySelector("#civil-pdf-result");
+    const civilExcelUpload = document.querySelector("#civil-excel-upload");
+    const civilExcelInput = document.querySelector("#civil-excel-input");
+    const civilExcelDropzone = document.querySelector("#civil-excel-dropzone");
+    const civilExcelFileName = document.querySelector("#civil-excel-file-name");
+    const generateExcelEstimate = document.querySelector("#generate-excel-estimate");
+    const civilExcelResult = document.querySelector("#civil-excel-result");
+    const civilAi = document.querySelector("#civil-ai");
+    const civilAiRequirement = document.querySelector("#civil-ai-requirement");
+    const civilAiGenerate = document.querySelector("#civil-ai-generate");
+    const civilAiStatus = document.querySelector("#civil-ai-status");
+    const civilAiResult = document.querySelector("#civil-ai-result");
+    const pipingMto = document.querySelector("#piping-mto");
+    const pipingMtoFrame = document.querySelector("#piping-mto-frame");
+    const pipingAi = document.querySelector("#piping-ai");
+    const pmsSelect = document.querySelector("#pms-select");
+    const pipeClassName = document.querySelector("#pipe-class-name");
+    const processTemperature = document.querySelector("#process-temperature");
+    const generatePipingMto = document.querySelector("#generate-piping-mto");
+    const pipingMtoStatus = document.querySelector("#piping-mto-status");
+    const pipingMtoResult = document.querySelector("#piping-mto-result");
+    const pipingAiRequirement = document.querySelector("#piping-ai-requirement");
+    const pipingAiGenerate = document.querySelector("#piping-ai-generate");
+    const pipingAiStatus = document.querySelector("#piping-ai-status");
+    const pipingAiResult = document.querySelector("#piping-ai-result");
+    const themeToggle = document.querySelector(".theme-toggle");
+    const appShell = document.querySelector(".app-shell");
+    const disciplineToggle = document.querySelector(".discipline-toggle");
+    const disciplineSidebarKey = "nirmaanq-discipline-sidebar-collapsed";
+
+    function showGenerationResult(generateButton, resultPanel, statusNode) {
+      generateButton.hidden = true;
+      resultPanel.hidden = false;
+      if (statusNode) statusNode.textContent = "";
+    }
+
+    document.querySelectorAll(".edit-generation").forEach((button) => {
+      button.addEventListener("click", () => {
+        const resultPanel = button.closest(".generation-result");
+        const generateButton = document.querySelector(`#${button.dataset.generate}`);
+        const focusTarget = document.querySelector(`#${button.dataset.focus}`);
+
+        resultPanel.hidden = true;
+        generateButton.hidden = false;
+        focusTarget?.focus();
+        focusTarget?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+
+    window.addEventListener("message", (event) => {
+      if (event.source !== pipingMtoFrame.contentWindow || event.data?.type !== "piping-mto-height") return;
+      const contentHeight = Number(event.data.height);
+      if (Number.isFinite(contentHeight)) {
+        pipingMtoFrame.style.height = `${Math.max(300, contentHeight)}px`;
+      }
+    });
+
+    function updateDisciplineToggle(isCollapsed) {
+      const label = isCollapsed ? "Open discipline sidebar" : "Close discipline sidebar";
+      disciplineToggle.setAttribute("aria-expanded", String(!isCollapsed));
+      disciplineToggle.setAttribute("aria-label", label);
+      disciplineToggle.setAttribute("title", label);
+    }
+
+    const savedDisciplineSidebar = localStorage.getItem(disciplineSidebarKey) === "true";
+    appShell.classList.toggle("discipline-collapsed", savedDisciplineSidebar);
+    updateDisciplineToggle(savedDisciplineSidebar);
+
+    disciplineToggle.addEventListener("click", () => {
+      const isCollapsed = appShell.classList.toggle("discipline-collapsed");
+      localStorage.setItem(disciplineSidebarKey, String(isCollapsed));
+      updateDisciplineToggle(isCollapsed);
+    });
+
+    function updateThemeControl(theme) {
+      const isDark = theme === "dark";
+      const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+      themeToggle.setAttribute("aria-label", label);
+      themeToggle.setAttribute("title", label);
+    }
+
+    updateThemeControl(document.documentElement.dataset.theme || "light");
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem("nirmaanq-theme", nextTheme);
+      updateThemeControl(nextTheme);
+    });
+
+    function shortDisciplineName(name) {
+      return name === "Civil & Structural Works" ? "Civil & Structural" : "Piping";
+    }
+
+    disciplineCards.forEach((card) => {
+      card.addEventListener("click", () => {
+        disciplineCards.forEach((item) => {
+          const isSelected = item === card;
+          item.classList.toggle("selected", isSelected);
+          item.querySelector(".selected-mark").hidden = !isSelected;
+        });
+
+        const discipline = card.dataset.discipline;
+        disciplineSelectionPrompt.hidden = true;
+        disciplinePageHead.hidden = false;
+        const isCivil = discipline === "Civil & Structural Works";
+        const isPiping = discipline === "Piping Works";
+        civilUpload.hidden = !isCivil;
+        civilExcelUpload.hidden = !isCivil;
+        civilAi.hidden = !isCivil;
+        pipingMto.hidden = !isPiping;
+        pipingAi.hidden = !isPiping;
+        disciplineWorkspace.hidden = isCivil || isPiping;
+        selectionBar.hidden = isCivil || isPiping;
+        selectedDiscipline.textContent = discipline;
+        quantityPageTitle.innerHTML = `Quantity Input for <span class="title-separator">&gt;</span> ${discipline}`;
+        continueButton.textContent = `Continue with ${shortDisciplineName(discipline)}`;
+        workspaceDisciplineTitle.textContent = discipline;
+        workspaceDescription.textContent = discipline === "Piping Works"
+          ? "Piping is selected. Its detailed line-item, fittings, valves and supports form will appear in this workspace after approval."
+          : "Civil & Structural is selected. The detailed quantity-entry form will appear in this workspace after its fields and calculation rules are approved.";
+        reviewStatus.textContent = `You are preparing a ${discipline} estimate.`;
+      });
+    });
+
+    function setCivilPdf(file) {
+      const isPdf = file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+      if (!isPdf) {
+        civilPdfInput.value = "";
+        civilFileName.textContent = file ? "Please select a PDF file." : "";
+        generateEstimate.disabled = true;
+        return;
+      }
+      civilFileName.textContent = `Selected file: ${file.name}`;
+      generateEstimate.disabled = false;
+    }
+
+    civilPdfInput.addEventListener("change", () => {
+      setCivilPdf(civilPdfInput.files[0]);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      civilDropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        civilDropzone.classList.add("is-dragging");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      civilDropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        civilDropzone.classList.remove("is-dragging");
+      });
+    });
+
+    civilDropzone.addEventListener("drop", (event) => {
+      setCivilPdf(event.dataTransfer.files[0]);
+    });
+
+    generateEstimate.addEventListener("click", () => {
+      if (generateEstimate.disabled) return;
+      showGenerationResult(generateEstimate, civilPdfResult);
+    });
+
+    function setCivilExcel(file) {
+      const isExcel = file && file.name.toLowerCase().endsWith(".xlsx");
+      if (!isExcel) {
+        civilExcelInput.value = "";
+        civilExcelFileName.textContent = file ? "Please select an .xlsx file." : "";
+        generateExcelEstimate.disabled = true;
+        return;
+      }
+      civilExcelFileName.textContent = `Selected file: ${file.name}`;
+      generateExcelEstimate.disabled = false;
+    }
+
+    civilExcelInput.addEventListener("change", () => {
+      setCivilExcel(civilExcelInput.files[0]);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      civilExcelDropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        civilExcelDropzone.classList.add("is-dragging");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      civilExcelDropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        civilExcelDropzone.classList.remove("is-dragging");
+      });
+    });
+
+    civilExcelDropzone.addEventListener("drop", (event) => {
+      setCivilExcel(event.dataTransfer.files[0]);
+    });
+
+    generateExcelEstimate.addEventListener("click", () => {
+      if (generateExcelEstimate.disabled) return;
+      showGenerationResult(generateExcelEstimate, civilExcelResult);
+    });
+
+    civilAiGenerate.addEventListener("click", () => {
+      const requirement = civilAiRequirement.value.trim();
+      if (!requirement) {
+        civilAiStatus.textContent = "Please describe the Civil & Structural work you want to estimate.";
+        return;
+      }
+      showGenerationResult(civilAiGenerate, civilAiResult, civilAiStatus);
+    });
+
+    pmsSelect.addEventListener("change", () => {
+      pipingMtoStatus.textContent = pmsSelect.value
+        ? `${pmsSelect.value} selected.`
+        : "";
+    });
+
+    generatePipingMto.addEventListener("click", () => {
+      if (!pmsSelect.value) {
+        pipingMtoStatus.textContent = "Select a Pipe Material Spec.";
+        return;
+      }
+      const details = [
+        pmsSelect.value,
+        pipeClassName.value.trim() ? `class ${pipeClassName.value.trim()}` : "",
+        processTemperature.value ? `${processTemperature.value}°C` : ""
+      ].filter(Boolean).join(" | ");
+      showGenerationResult(generatePipingMto, pipingMtoResult, pipingMtoStatus);
+    });
+
+    pipingAiGenerate.addEventListener("click", () => {
+      if (!pipingAiRequirement.value.trim()) {
+        pipingAiStatus.textContent = "Please describe the piping work you want to estimate.";
+        return;
+      }
+      showGenerationResult(pipingAiGenerate, pipingAiResult, pipingAiStatus);
+    });
+
+    continueButton.addEventListener("click", () => {
+      reviewStatus.textContent = `${selectedDiscipline.textContent} is selected. Its detailed form is intentionally not included in this review page.`;
+    });
+
+    try {
+      const draft = JSON.parse(localStorage.getItem("nirmaanq-project-draft") || "{}");
+      if (draft.projectName) document.querySelector("#project-name").textContent = draft.projectName;
+      if (draft.projectCode) document.querySelector("#project-code").textContent = draft.projectCode;
+      if (draft.location) {
+        document.querySelector("#project-location").textContent =
+          draft.location === "Other location" ? (draft.otherLocation || draft.location) : draft.location;
+      }
+    } catch (error) {
+      console.warn("Project draft could not be loaded.", error);
+    }
+  </script>
+</body>
+</html>

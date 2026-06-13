@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAX PROJECT - Material Take Off (A10A)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 850px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #333; margin-bottom: 20px; font-size: 19px; }
+    .filters { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-group { flex: 1; min-width: 200px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+    select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+    th { background: #0a3761; color: white; font-weight: bold; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    tr:hover { background: #e8f4f8; }
+    .qty-input, .size-select, .text-input { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; text-align: center; }
+    .text-input { text-align: left; padding-left: 8px; }
+    .info { margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; font-size: 13px; }
+    
+    /* Button Styles */
+    .btn-action {
+      border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer;
+      font-size: 16px; line-height: 1; margin-right: 4px; transition: background 0.2s;
+    }
+    .btn-add { background: #28a745; color: white; }
+    .btn-add:hover { background: #218838; }
+    .btn-remove { background: #dc3545; color: white; }
+    .btn-remove:hover { background: #c82333; }
+    .action-buttons {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .action-buttons .btn-action { margin-right: 0; }
+    
+    /* Custom Row Styling */
+    .custom-row { background-color: #fffde7 !important; }
+    .custom-row td { border-color: #ffc107; }
+    
+    /* Print Styles */
+    @media print {
+      .no-print, .filters, .btn-action { display: none !important; }
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; max-width: 100%; padding: 0; }
+      th { background: #ddd !important; color: black !important; -webkit-print-color-adjust: exact; }
+      .text-input, .size-select, .qty-input { border: none; padding: 0; font-weight: bold; }
+      .custom-row { background-color: #f9f9f9 !important; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Enter your Quantities</h1>
+    
+    <div class="filters no-print">
+      <div class="filter-group">
+        <label for="groupSelect">Select items</label>
+        <select id="groupSelect">
+          <option value="">All Groups</option>
+          <option value="Pipe Group" selected>Pipe Group</option>
+          <option value="Fitting Group">Fitting Group</option>
+          <option value="Flange Group">Flange Group</option>
+          <option value="Valves Group">Valves Group</option>
+          <option value="Bolt Group">Bolt Group</option>
+          <option value="Gasket Group">Gasket Group</option>
+          <option value="Trap/Strainer Group">Trap/Strainer Group</option>
+          <option value="Other items">Other items</option>
+        </select>
+      </div>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Size (Inch)</th>
+          <th>Quantity</th>
+          <th>Unit</th>
+          <th class="no-print">Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    
+    <div class="info">
+      <strong>Note:</strong> Use "+" to add more rows for an item or create new custom items. Use "x" to remove rows.
+    </div>
+  </div>
+
+  <script>
+    const materialData = [
+      { group: 'Pipe Group', item: 'Pipe', minSize: 0.50, maxSize: 48.00, unit: 'M' },
+      { group: 'Pipe Group', item: 'Nipple', minSize: 0.50, maxSize: 1.50, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'Elbow 90 deg.', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'Elbow 45 deg.', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'Red. Tee', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'Equal Tee', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'Con. Reducer', minSize: 2.00, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'Ecc. Reducer', minSize: 2.00, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'SWAGE.CONC', minSize: 0.50, maxSize: 3.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'SWAGE.ECC', minSize: 0.50, maxSize: 3.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'CAP', minSize: 2.00, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'CPLNG.FULL', minSize: 0.50, maxSize: 1.50, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'CPLNG.HALF', minSize: 0.50, maxSize: 1.50, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'CPLNG.LH', minSize: 0.50, maxSize: 1.50, unit: 'Nos' },
+      { group: 'Fitting Group', item: 'CPLNG.RED', minSize: 0.50, maxSize: 1.50, unit: 'Nos' },
+      { group: 'Flange Group', item: 'Flange', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Flange Group', item: 'Blind Flange', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Flange Group', item: 'FLNG.FIG.8', minSize: 0.50, maxSize: 8.00, unit: 'Nos' },
+      { group: 'Flange Group', item: 'SPCR & BLN', minSize: 10.00, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Valves Group', item: 'Gate Valve', minSize: 0.25, maxSize: 42.00, unit: 'Nos' },
+      { group: 'Valves Group', item: 'Globe Valve', minSize: 0.25, maxSize: 16.00, unit: 'Nos' },
+      { group: 'Valves Group', item: 'Check Valve', minSize: 0.25, maxSize: 24.00, unit: 'Nos' },
+      { group: 'Valves Group', item: 'Ball Valve', minSize: 0.50, maxSize: 16.00, unit: 'Nos' },
+      { group: 'Valves Group', item: 'Plug Valve', minSize: 0.50, maxSize: 36.00, unit: 'Nos' },
+      { group: 'Valves Group', item: 'Butterfly Valve', minSize: 3.00, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Bolt Group', item: 'Stud with Nuts', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Gasket Group', item: 'Gasket', minSize: 0.50, maxSize: 48.00, unit: 'Nos' },
+      { group: 'Trap/Strainer Group', item: 'Trap Steam', minSize: 0.50, maxSize: 1.50, unit: 'Nos' },
+      { group: 'Trap/Strainer Group', item: 'Strainer Temp', minSize: 1.50, maxSize: 24.00, unit: 'Nos' },
+      { group: 'Trap/Strainer Group', item: 'Strainer Perm', minSize: 0.50, maxSize: 24.00, unit: 'Nos' }
+    ];
+
+    const standardSizes = [
+      0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 6.00,
+       8.00, 10.00, 12.00,, 14.00, 16.00, 18.00, 20.00,
+      22.00, 24.00, 26.00, 28.00, 30.00, 32.00, 34.00, 36.00, 40.00, 42.00, 48.00
+    ];
+
+    const groupSelect = document.getElementById('groupSelect');
+    const tableBody = document.getElementById('tableBody');
+
+    function reportContentHeight() {
+      const container = document.querySelector('.container');
+      const contentHeight = Math.ceil(container.getBoundingClientRect().bottom + 20);
+      window.parent.postMessage({ type: 'piping-mto-height', height: contentHeight }, '*');
+    }
+
+    function renderStandardRow(rowData) {
+      const tr = document.createElement('tr');
+      tr.dataset.groupType = 'standard';
+      const sizeDropdownHTML = createSizeDropdown(rowData.minSize, rowData.maxSize);
+      
+      tr.innerHTML = `
+        <td>${rowData.item}</td>
+        <td><select class="size-select">${sizeDropdownHTML}</select></td>
+        <td><input type="number" class="qty-input" min="0" placeholder="0"></td>
+        <td>${rowData.unit}</td>
+        <td class="no-print">
+          <span class="action-buttons">
+            <button class="btn-action btn-add" onclick="addRowAfter(this)" title="Add another size">+</button>
+            <button class="btn-action btn-remove" onclick="removeRow(this)" title="Remove row">x</button>
+          </span>
+        </td>
+      `;
+      return tr;
+    }
+
+    function renderCustomRow() {
+      const tr = document.createElement('tr');
+      tr.className = 'custom-row';
+      tr.dataset.groupType = 'other';
+      
+      tr.innerHTML = `
+        <td><input type="text" class="text-input" placeholder="Type item name..."></td>
+        <td><input type="text" class="text-input" placeholder="Type size..."></td>
+        <td><input type="number" class="qty-input" min="0" placeholder="0"></td>
+        <td><input type="text" class="text-input" placeholder="Type unit"></td>
+        <td class="no-print">
+          <span class="action-buttons">
+            <button class="btn-action btn-add" onclick="addRowAfter(this)" title="Add another custom item">+</button>
+            <button class="btn-action btn-remove" onclick="removeRow(this)" title="Remove row">x</button>
+          </span>
+        </td>
+      `;
+      return tr;
+    }
+
+    function createSizeDropdown(minSize, maxSize) {
+      let sizesInRange = standardSizes.filter(s => s >= minSize && s <= maxSize);
+      let options = '<option value="">Select Size</option>';
+      sizesInRange.forEach(size => {
+        options += `<option value="${size}">${size}"</option>`;
+      });
+      return options;
+    }
+
+    function renderTable() {
+      const selectedGroup = groupSelect.value;
+      tableBody.innerHTML = '';
+      
+      // Render Standard Items
+      if (selectedGroup !== 'Other items') {
+        const filtered = materialData.filter(row => {
+          return !selectedGroup || row.group === selectedGroup;
+        });
+        filtered.forEach(row => {
+          tableBody.appendChild(renderStandardRow(row));
+        });
+      }
+
+      // Render Custom Items
+      if (selectedGroup === '' || selectedGroup === 'Other items') {
+        tableBody.appendChild(renderCustomRow());
+      }
+      
+      if (tableBody.children.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="5" style="text-align:center; padding:20px;">No items found.</td>';
+        tableBody.appendChild(tr);
+      }
+      requestAnimationFrame(reportContentHeight);
+    }
+
+    function addRowAfter(btn) {
+      const currentRow = btn.closest('tr');
+      const newRow = currentRow.cloneNode(true);
+      newRow.querySelectorAll('input, select').forEach(el => {
+        if(el.type === 'number') el.value = '';
+        else if(el.tagName === 'SELECT') el.selectedIndex = 0;
+        else if(el.tagName === 'INPUT') el.value = '';
+      });
+      currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
+      requestAnimationFrame(reportContentHeight);
+    }
+
+    function removeRow(btn) {
+      const row = btn.closest('tr');
+      const isCustom = row.classList.contains('custom-row');
+      const allCustomRows = document.querySelectorAll('.custom-row');
+      
+      // Prevent removing the last remaining row entirely if it's the only custom row
+      // But allow removing if there are other rows (standard or custom)
+      if (isCustom && allCustomRows.length === 1 && document.querySelectorAll('tr').length === 1) {
+        alert("Please keep at least one row.");
+        return;
+      }
+      
+      if(confirm('Remove this row?')) {
+        row.remove();
+        requestAnimationFrame(reportContentHeight);
+      }
+    }
+
+    groupSelect.addEventListener('change', renderTable);
+    window.addEventListener('load', reportContentHeight);
+    window.addEventListener('resize', reportContentHeight);
+    new ResizeObserver(reportContentHeight).observe(document.querySelector('.container'));
+    renderTable();
+  </script>
+</body>
+</html>
