@@ -544,7 +544,7 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="NirmaanQ.html" aria-label="NirmaanQ home">
+      <a class="brand" href="index.html" aria-label="NirmaanQ home">
         <img src="NirmaanQ-logo-final.png" alt="NirmaanQ logo" />
         <span class="brand-copy">
           <strong>NirmaanQ</strong>
@@ -851,7 +851,8 @@
       if (!projectForm.reportValidity()) return;
 
       localStorage.setItem(draftKey, JSON.stringify(getFormData()));
-      statusMessage.textContent = "Project details saved. Quantity Input will be the next module.";
+      statusMessage.textContent = "Project details saved. Opening Quantity Input...";
+      window.location.href = "NirmaanQ-Quantity-Input-Review.html";
     });
   </script>
 </body>

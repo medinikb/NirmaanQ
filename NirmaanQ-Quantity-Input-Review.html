@@ -1302,7 +1302,7 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Main navigation">
-      <a class="brand" href="NirmaanQ.html" aria-label="NirmaanQ home">
+      <a class="brand" href="index.html" aria-label="NirmaanQ home">
         <img src="NirmaanQ-logo-final.png" alt="NirmaanQ" />
       </a>
       <nav class="side-nav">
@@ -1819,7 +1819,7 @@
         pipingMto.hidden = !isPiping;
         pipingAi.hidden = !isPiping;
         disciplineWorkspace.hidden = isCivil || isPiping;
-        selectionBar.hidden = isCivil || isPiping;
+        selectionBar.hidden = false;
         selectedDiscipline.textContent = discipline;
         quantityPageTitle.innerHTML = `Quantity Input for <span class="title-separator">&gt;</span> ${discipline}`;
         continueButton.textContent = `Continue with ${shortDisciplineName(discipline)}`;
@@ -1946,7 +1946,7 @@
     });
 
     continueButton.addEventListener("click", () => {
-      reviewStatus.textContent = `${selectedDiscipline.textContent} is selected. Its detailed form is intentionally not included in this review page.`;
+      window.location.href = "NirmaanQ-Review-Estimate.html";
     });
 
     try {
