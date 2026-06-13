@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Review Estimate | NirmaanQ</title>
+  <meta name="description" content="Review and approve a NirmaanQ project cost estimate." />
+  <script>
+    (() => {
+      const savedTheme = localStorage.getItem("nirmaanq-theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
+    })();
+  </script>
+  <style>
+    :root {
+      --navy: #082f57;
+      --navy-deep: #062644;
+      --navy-soft: #315475;
+      --orange: #f45a16;
+      --orange-dark: #d84a0d;
+      --white: #ffffff;
+      --page: #f6f8fb;
+      --line: #dce4ed;
+      --muted: #66788c;
+      --soft: #edf3f8;
+      --success: #179453;
+      --warning: #c77a08;
+      --danger: #c63f3f;
+      --chart-civil: #2879b8;
+      --chart-other: #63c7a2;
+      --shadow: 0 14px 38px rgba(8, 47, 87, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    body {
+      min-height: 100vh;
+      font-family: Arial, Roboto, sans-serif;
+      color: var(--navy);
+      background: var(--page);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea, select, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+    }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 22px 10px;
+      background: linear-gradient(180deg, #082f57 0%, #064477 100%);
+      color: var(--white);
+    }
+    .brand {
+      position: absolute;
+      top: 14px;
+      left: 5px;
+      z-index: 2;
+      width: 82px;
+      height: 58px;
+      display: grid;
+      flex: 0 0 58px;
+      place-items: center;
+      margin: 0;
+      border-radius: 10px;
+      background: var(--white);
+      overflow: hidden;
+    }
+    .brand img {
+      width: 78px;
+      height: 54px;
+      display: block;
+      object-fit: contain;
+    }
+    .side-nav {
+      width: 100%;
+      display: grid;
+      gap: 10px;
+      margin-top: 78px;
+    }
+    .nav-item {
+      min-height: 64px;
+      display: grid;
+      place-items: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 10px;
+      text-align: center;
+    }
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--white);
+      box-shadow: inset 3px 0 var(--orange);
+    }
+    .nav-item.active .nav-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--orange);
+    }
+    .sidebar-user {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      margin-top: auto;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .workspace { min-width: 0; }
+    .topbar {
+      min-height: 82px;
+      display: grid;
+      grid-template-columns: minmax(430px, 700px) minmax(160px, 1fr);
+      align-items: center;
+      gap: 30px;
+      padding: 12px 34px;
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+    .progress {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: start;
+    }
+    .progress-step {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .progress-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: calc(50% + 18px);
+      width: calc(100% - 36px);
+      height: 2px;
+      background: var(--orange);
+    }
+    .step-number {
+      width: 30px;
+      height: 30px;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--success);
+      border-radius: 50%;
+      background: var(--success);
+      color: var(--white);
+    }
+    .progress-step.active { color: var(--navy); }
+    .progress-step.active .step-number {
+      border-color: var(--orange);
+      background: var(--orange);
+    }
+    .top-actions { justify-self: end; display: flex; align-items: center; gap: 12px; }
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--white);
+      color: var(--navy);
+    }
+    .theme-toggle-icon {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      box-shadow: inset -6px -3px 0 0 currentColor;
+    }
+    .user-badge {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .content {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 32px 38px 110px;
+    }
+    .project-strip {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr 1fr;
+      margin-bottom: 25px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--white);
+    }
+    .project-detail {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      padding: 0 18px;
+      border-right: 1px solid var(--line);
+    }
+    .project-detail:first-child { padding-left: 0; }
+    .project-detail:last-child { border-right: 0; }
+    .project-detail svg { margin-top: 4px; color: var(--navy-soft); }
+    .project-detail span { display: block; color: var(--muted); font-size: 11px; }
+    .project-detail strong { display: block; margin-top: 2px; font-size: 13px; }
+
+    .cost-report {
+      margin-bottom: 26px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .cost-report-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 20px;
+      background: var(--navy);
+      color: var(--white);
+    }
+    .cost-report-head h2 { font-size: 15px; }
+    .cost-report-project {
+      max-width: 50%;
+      overflow: hidden;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      color: #dbe8f2;
+      font-size: 11px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cost-report-body {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto minmax(300px, 1fr);
+      align-items: center;
+      gap: 34px;
+      padding: 24px 28px;
+    }
+    .cost-report-total span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .cost-report-total strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--navy);
+      font-size: 32px;
+      line-height: 1.1;
+    }
+    .cost-report-ready {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 9px;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .cost-report-ready::before {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 7px;
+      border-radius: 50%;
+      background: var(--success);
+      content: "";
+    }
+    .cost-report-class {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .cost-donut {
+      position: relative;
+      width: 138px;
+      height: 138px;
+      flex: 0 0 138px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--chart-civil) 0 32.5%,
+        var(--orange) 32.5% 90.8%,
+        var(--chart-other) 90.8% 100%
+      );
+      box-shadow: inset 0 0 0 1px rgba(8, 47, 87, 0.05);
+    }
+    .cost-donut::after {
+      position: absolute;
+      inset: 31px;
+      border-radius: 50%;
+      background: var(--white);
+      content: "";
+    }
+    .cost-legend {
+      display: grid;
+      gap: 11px;
+    }
+    .cost-legend-item {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .cost-legend-item strong {
+      color: var(--navy);
+      font-variant-numeric: tabular-nums;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .legend-dot.civil { background: var(--chart-civil); }
+    .legend-dot.piping { background: var(--orange); }
+    .legend-dot.other { background: var(--chart-other); }
+    .cost-report-breakdown {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .cost-breakdown-item {
+      padding: 16px 22px;
+      border-right: 1px solid var(--line);
+    }
+    .cost-breakdown-item:last-child { border-right: 0; }
+    .cost-breakdown-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .cost-breakdown-item strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--navy);
+      font-size: 19px;
+    }
+    .cost-breakdown-item small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+    .page-head h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.7px; }
+    .page-head p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border: 1px solid #ffd2bd;
+      border-radius: 999px;
+      background: #fff4ed;
+      color: var(--orange-dark);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1.25fr repeat(3, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .summary-card {
+      min-height: 126px;
+      padding: 19px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .summary-card.primary {
+      color: var(--white);
+      border-color: var(--navy);
+      background: var(--navy);
+    }
+    .summary-label { color: var(--muted); font-size: 11px; }
+    .summary-card.primary .summary-label { color: #b9ccdc; }
+    .summary-value { display: block; margin-top: 12px; font-size: 24px; font-weight: 800; }
+    .summary-note { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .summary-card.primary .summary-note { color: #b9ccdc; }
+
+    .review-layout {
+      display: block;
+    }
+    .review-main { display: grid; gap: 20px; }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 17px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 { font-size: 16px; }
+    .panel-head p { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .panel-body { padding: 20px; }
+    .discipline-row {
+      display: grid;
+      grid-template-columns: 1.5fr repeat(3, minmax(100px, 0.65fr)) 36px;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .discipline-row:first-child { padding-top: 0; }
+    .discipline-row:last-child { padding-bottom: 0; border-bottom: 0; }
+    .discipline-name { display: flex; align-items: center; gap: 11px; }
+    .discipline-name .discipline-number {
+      width: 23px;
+      height: 23px;
+      display: grid;
+      flex: 0 0 23px;
+      place-items: center;
+      margin: -5px 0 0;
+      border-radius: 50%;
+      background: var(--orange);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .discipline-name strong { display: block; font-size: 13px; }
+    .discipline-name span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .metric span { display: block; color: var(--muted); font-size: 10px; }
+    .metric strong { display: block; margin-top: 3px; font-size: 13px; }
+    .expand-button {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--navy);
+    }
+    .expand-button.open svg { transform: rotate(180deg); }
+    .detail-table-wrap {
+      overflow-x: auto;
+      padding: 0 20px 20px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .civil-review-table { min-width: 1260px; }
+    .civil-review-table th { line-height: 1.35; vertical-align: middle; }
+    .civil-review-table th:first-child,
+    .civil-review-table td:first-child {
+      width: 58px;
+      text-align: center;
+    }
+    .civil-review-table th:nth-child(2) { width: 150px; }
+    .civil-review-table th:nth-child(3) { width: 310px; }
+    .civil-review-table th:nth-child(4) { width: 70px; }
+    .civil-review-table th:nth-child(5),
+    .civil-review-table th:nth-child(6),
+    .civil-review-table th:nth-child(7) { width: 100px; }
+    .civil-review-table th:nth-child(8),
+    .civil-review-table th:nth-child(9) { width: 170px; }
+    th, td { padding: 10px 11px; border: 1px solid var(--line); text-align: left; }
+    th { background: var(--navy); color: var(--white); font-weight: 700; }
+    td.number { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:nth-child(even) { background: #f9fbfd; }
+
+    .split-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .split-section { padding: 20px; }
+    .split-section + .split-section { border-left: 1px solid var(--line); }
+    .split-section h3 { margin-bottom: 12px; font-size: 14px; }
+    .check-list { display: grid; gap: 9px; list-style: none; }
+    .check-list li {
+      position: relative;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .check-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--orange);
+    }
+    .document-list { display: grid; gap: 9px; }
+    .document-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--navy);
+      font-size: 11px;
+    }
+    .document-row span { display: flex; align-items: center; gap: 8px; }
+    .document-row svg { width: 16px; height: 16px; color: var(--orange); }
+
+    .button {
+      min-height: 43px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .button-primary { background: var(--orange); color: var(--white); }
+    .button-primary:hover { background: var(--orange-dark); }
+    .button-secondary { border-color: var(--line); background: var(--white); color: var(--navy); }
+
+    .bottom-actions {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 92px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 38px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 -10px 28px rgba(8, 47, 87, 0.08);
+      backdrop-filter: blur(10px);
+    }
+    .footer-meta {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .bottom-buttons { display: flex; gap: 9px; }
+
+    html[data-theme="dark"] body { color: #e5eef6; background: #07131f; }
+    html[data-theme="dark"] .topbar,
+    html[data-theme="dark"] .project-strip,
+    html[data-theme="dark"] .cost-report,
+    html[data-theme="dark"] .summary-card,
+    html[data-theme="dark"] .panel,
+    html[data-theme="dark"] .icon-button,
+    html[data-theme="dark"] .button-secondary {
+      border-color: #294256;
+      background: #0d2030;
+      color: #e5eef6;
+    }
+    html[data-theme="dark"] .summary-card.primary { background: #10283a; }
+    html[data-theme="dark"] .progress-step.active { color: #ffffff; }
+    html[data-theme="dark"] .cost-report-head { background: #10283a; }
+    html[data-theme="dark"] .cost-report-total strong,
+    html[data-theme="dark"] .cost-legend-item strong,
+    html[data-theme="dark"] .cost-breakdown-item strong { color: #f2f7fb; }
+    html[data-theme="dark"] .cost-donut::after { background: #0d2030; }
+    html[data-theme="dark"] .cost-legend-item,
+    html[data-theme="dark"] .cost-report-total span,
+    html[data-theme="dark"] .cost-report-class,
+    html[data-theme="dark"] .cost-breakdown-item span,
+    html[data-theme="dark"] .cost-breakdown-item small { color: #91a6b8; }
+    html[data-theme="dark"] .cost-report-breakdown {
+      border-color: #294256;
+      background: #0a1b29;
+    }
+    html[data-theme="dark"] .cost-breakdown-item { border-color: #294256; }
+    html[data-theme="dark"] .page-head h1,
+    html[data-theme="dark"] .panel-head h2,
+    html[data-theme="dark"] .discipline-name strong,
+    html[data-theme="dark"] .metric strong,
+    html[data-theme="dark"] .split-section h3 { color: #f2f7fb; }
+    html[data-theme="dark"] .summary-label,
+    html[data-theme="dark"] .summary-note,
+    html[data-theme="dark"] .page-head p,
+    html[data-theme="dark"] .panel-head p,
+    html[data-theme="dark"] .discipline-name span,
+    html[data-theme="dark"] .metric span,
+    html[data-theme="dark"] .check-list li { color: #91a6b8; }
+    html[data-theme="dark"] .document-row,
+    html[data-theme="dark"] .expand-button {
+      border-color: #36536a;
+      background: #07131f;
+      color: #e5eef6;
+    }
+    html[data-theme="dark"] .discipline-name .discipline-number {
+      color: #ffffff;
+    }
+    html[data-theme="dark"] tbody tr:nth-child(even) { background: #102536; }
+    html[data-theme="dark"] th, html[data-theme="dark"] td { border-color: #294256; }
+    html[data-theme="dark"] .split-section + .split-section { border-color: #294256; }
+    html[data-theme="dark"] .bottom-actions {
+      border-color: #294256;
+      background: rgba(13, 32, 48, 0.96);
+    }
+    html[data-theme="dark"] .theme-toggle-icon {
+      background: var(--orange);
+      box-shadow: none;
+      transform: scale(0.82);
+    }
+
+    @media (max-width: 1080px) {
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cost-report-body { grid-template-columns: 1fr auto 1fr; gap: 22px; }
+      .review-layout { display: block; }
+    }
+    @media (max-width: 760px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 10px 16px;
+      }
+      .brand {
+        position: static;
+        width: 62px;
+        height: 44px;
+        margin: 0;
+      }
+      .brand img { width: 58px; height: 40px; }
+      .side-nav { margin-top: 0; }
+      .side-nav, .sidebar-user { display: none; }
+      .topbar { min-height: 72px; grid-template-columns: 1fr auto; padding-inline: 18px; }
+      .progress { grid-column: 1 / -1; grid-row: 2; margin-top: 8px; }
+      .top-actions { grid-column: 2; grid-row: 1; }
+      .content { padding: 25px 16px 125px; }
+      .project-strip, .summary-grid, .split-panel { grid-template-columns: 1fr; }
+      .cost-report-body {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 22px;
+        text-align: center;
+      }
+      .cost-report-ready { justify-content: center; }
+      .cost-legend { width: 100%; max-width: 360px; text-align: left; }
+      .cost-report-breakdown { grid-template-columns: 1fr; }
+      .cost-breakdown-item {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .cost-breakdown-item:last-child { border-bottom: 0; }
+      .project-detail {
+        padding: 12px 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .project-detail:first-child { padding-top: 0; }
+      .project-detail:last-child { padding-bottom: 0; border-bottom: 0; }
+      .page-head { flex-direction: column; }
+      .discipline-row { grid-template-columns: 1fr 1fr 36px; }
+      .discipline-name { grid-column: 1 / -1; }
+      .discipline-row .metric:nth-of-type(3) { display: none; }
+      .split-section + .split-section { border-top: 1px solid var(--line); border-left: 0; }
+      .bottom-actions { left: 0; align-items: stretch; flex-direction: column; padding: 12px 16px; }
+      .bottom-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="index.html" aria-label="NirmaanQ home">
+        <img src="./NirmaanQ-logo-final.png?v=20260612" alt="NirmaanQ" />
+      </a>
+      <nav class="side-nav">
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v11H3z"/></svg><span>Projects</span></a>
+        <a class="nav-item active" href="NirmaanQ-Project-Entry.html"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>New Estimate</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></svg><span>Estimates</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Reports</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></svg><span>Templates</span></a>
+        <a class="nav-item" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1v4H21a1.7 1.7 0 0 0-1.6 1z"/></svg><span>Settings</span></a>
+      </nav>
+      <span class="sidebar-user">PM</span>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div class="progress" aria-label="Estimate progress">
+          <a class="progress-step" href="NirmaanQ-Project-Entry.html"><span class="step-number">✓</span><span>Project details</span></a>
+          <a class="progress-step" href="NirmaanQ-Quantity-Input-Review.html"><span class="step-number">✓</span><span>Quantity input</span></a>
+          <div class="progress-step active"><span class="step-number">3</span><span>Review estimate</span></div>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button theme-toggle" type="button" aria-label="Switch theme"><span class="theme-toggle-icon"></span></button>
+          <button class="icon-button" type="button" aria-label="Help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 4.1 1.7c-1.2 1-1.9 1.4-1.9 2.8M12 17h.01"/></svg></button>
+          <span class="user-badge">PM</span>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="project-strip" aria-label="Current project">
+          <div class="project-detail">
+            <svg viewBox="0 0 24 24"><path d="M4 20V5h16v15"/><path d="M8 9h2M14 9h2M8 13h2M14 13h2M9 20v-3h6v3"/></svg>
+            <div><span>Project name</span><strong id="project-name">New Tank Farm Development</strong></div>
+          </div>
+          <div class="project-detail">
+            <svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5"/></svg>
+            <div><span>Project code</span><strong id="project-code">MOC-2026-014</strong></div>
+          </div>
+          <div class="project-detail">
+            <svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <div><span>Location</span><strong id="project-location">Numaligarh</strong></div>
+          </div>
+        </section>
+
+        <section class="cost-report" aria-labelledby="cost-report-title">
+          <div class="cost-report-head">
+            <h2 id="cost-report-title">NirmaanQ Cost Report</h2>
+            <span class="cost-report-project" id="cost-report-project">New Tank Farm Development</span>
+          </div>
+          <div class="cost-report-body">
+            <div class="cost-report-total">
+              <span>Total estimated cost</span>
+              <strong>INR 12.84 Cr</strong>
+              <p class="cost-report-ready">Estimate ready with rate backup</p>
+              <p class="cost-report-class">Class 3 estimate | Accuracy: -20% to +30%</p>
+            </div>
+            <div
+              class="cost-donut"
+              role="img"
+              aria-label="Cost distribution: Civil and Structural Works 32.5 percent, Piping Works 58.3 percent, Contingency and Other 9.2 percent"
+            ></div>
+            <div class="cost-legend" aria-label="Cost distribution legend">
+              <div class="cost-legend-item">
+                <span class="legend-dot civil"></span>
+                <span>Civil &amp; Structural Works</span>
+                <strong>₹ 4.18 Cr | 32.5%</strong>
+              </div>
+              <div class="cost-legend-item">
+                <span class="legend-dot piping"></span>
+                <span>Piping Works</span>
+                <strong>₹ 7.49 Cr | 58.3%</strong>
+              </div>
+              <div class="cost-legend-item">
+                <span class="legend-dot other"></span>
+                <span>Contingency &amp; Other</span>
+                <strong>₹ 1.17 Cr | 9.2%</strong>
+              </div>
+            </div>
+          </div>
+          <div class="cost-report-breakdown" aria-label="Cost breakdown">
+            <div class="cost-breakdown-item">
+              <span>Material cost</span>
+              <strong>INR 7.46 Cr</strong>
+              <small>58.1% of total estimate</small>
+            </div>
+            <div class="cost-breakdown-item">
+              <span>Service cost</span>
+              <strong>INR 4.21 Cr</strong>
+              <small>Fabrication, erection and testing</small>
+            </div>
+            <div class="cost-breakdown-item">
+              <span>Contingency and other</span>
+              <strong>INR 1.17 Cr</strong>
+              <small>Includes 7.5% contingency</small>
+            </div>
+          </div>
+        </section>
+
+        <div class="page-head">
+          <div>
+            <h1>Review Estimate</h1>
+            <p>Verify costs, assumptions and supporting documents before submitting the estimate for review &amp; approval.</p>
+          </div>
+          <span class="status-chip" id="estimate-status"><span class="status-dot"></span>Ready for review &amp; approval</span>
+        </div>
+
+        <div class="review-layout">
+          <div class="review-main">
+            <section class="panel">
+              <div class="panel-head">
+                <div><h2>Discipline Cost Summary</h2><p>Expand a discipline to review its items.</p></div>
+                <span class="status-chip"><span class="status-dot"></span>2 disciplines</span>
+              </div>
+              <div class="panel-body">
+                <div class="discipline-row">
+                  <div class="discipline-name">
+                    <span class="discipline-number">1</span>
+                    <div><strong>Civil &amp; Structural Works</strong><span>Foundation drawing and ANNEXURE-2 BOQ</span></div>
+                  </div>
+                  <div class="metric"><span>Items</span><strong>42</strong></div>
+                  <div class="metric"><span>Material</span><strong>INR 2.64 Cr</strong></div>
+                  <div class="metric"><span>Total</span><strong>INR 4.18 Cr</strong></div>
+                  <button class="expand-button open" type="button" data-target="civil-details" aria-expanded="true" aria-label="Toggle Civil details"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
+                </div>
+              </div>
+              <div class="detail-table-wrap" id="civil-details">
+                <table class="civil-review-table">
+                  <thead>
+                    <tr>
+                      <th>Sl. No.</th>
+                      <th>SHORT DESCRIPTION</th>
+                      <th>JOB DESCRIPTION/ ACTIVITIES/LONG DESCRIPTION</th>
+                      <th>UNIT</th>
+                      <th>QUANTITY</th>
+                      <th>RATE (₹)</th>
+                      <th>AMOUNT (₹)</th>
+                      <th>RATE SOURCE<br>(NRL CIVIL SOR 2023)</th>
+                      <th>RATE SOURCE<br>(NRL POs)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>1</td><td>Earthwork excavation</td><td>Excavation in soil for foundations, including dressing, dewatering and disposal of surplus earth.</td><td>m3</td><td class="number">450.00</td><td class="number">850</td><td class="number">3,82,500</td><td>SOR Item 2.1</td><td>PO reference not used</td></tr>
+                    <tr><td>2</td><td>Plain cement concrete M10</td><td>Providing and laying PCC M10 below foundations, including materials, mixing, placing and curing.</td><td>m3</td><td class="number">72.50</td><td class="number">6,900</td><td class="number">5,00,250</td><td>SOR Item 5.4</td><td>PO reference not used</td></tr>
+                    <tr><td>3</td><td>Reinforced cement concrete M30</td><td>Providing and laying RCC M30 for foundations, including vibration, finishing and curing, excluding reinforcement.</td><td>m3</td><td class="number">128.40</td><td class="number">11,800</td><td class="number">15,15,120</td><td>SOR Item 6.8</td><td>NRL PO-CIV-2025-014</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="panel-body">
+                <div class="discipline-row">
+                  <div class="discipline-name">
+                    <span class="discipline-number">2</span>
+                    <div><strong>Piping Works</strong><span>PMS-based MTO and service scope</span></div>
+                  </div>
+                  <div class="metric"><span>Items</span><strong>86</strong></div>
+                  <div class="metric"><span>Material</span><strong>INR 4.82 Cr</strong></div>
+                  <div class="metric"><span>Total</span><strong>INR 7.49 Cr</strong></div>
+                  <button class="expand-button" type="button" data-target="piping-details" aria-expanded="false" aria-label="Toggle Piping details"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
+                </div>
+              </div>
+              <div class="detail-table-wrap" id="piping-details" hidden>
+                <table class="civil-review-table">
+                  <thead>
+                    <tr>
+                      <th>Sl. No.</th>
+                      <th>SHORT DESCRIPTION</th>
+                      <th>JOB DESCRIPTION/ ACTIVITIES/LONG DESCRIPTION</th>
+                      <th>UNIT</th>
+                      <th>QUANTITY</th>
+                      <th>RATE (₹)</th>
+                      <th>AMOUNT (₹)</th>
+                      <th>RATE SOURCE<br>(NRL ME SOR)</th>
+                      <th>RATE SOURCE<br>(NRL POs)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>1</td><td>12 inch pipe</td><td>Supply of Pipe (E.R.W.): 12&quot;,S20, API 5L GR.B, B -36.10, BE.</td><td>m</td><td class="number">100.00</td><td class="number">2,850</td><td class="number">2,85,000</td><td>ME SOR Item P-2.1</td><td>PO reference not used</td></tr>
+                    <tr><td>2</td><td>Pipe works (Non-IBR; CS; Thk; S20)</td><td>Fabrication, Welding, Erection, NDT, and Hydro-testing of piping as per the approved PMS and isometric drawings.</td><td>ID</td><td class="number">300.00</td><td class="number">1,040</td><td class="number">3,12,000</td><td>ME SOR Item P-2.8</td><td>NRL PO-PIP-2025-021</td></tr>
+                    <tr><td>3</td><td>90 degree elbows</td><td>Supply and installation of carbon steel 90 degree elbows of approved material grade, schedule and size as per the piping MTO.</td><td>Nos</td><td class="number">130</td><td class="number">4,200</td><td class="number">5,46,000</td><td>ME SOR Item F-4.2</td><td>NRL PO-PIP-2025-018</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel split-panel">
+              <div class="split-section">
+                <h3>Estimate Basis and Assumptions</h3>
+                <ul class="check-list">
+                  <li>Quantities are based on the current foundation drawing and uploaded BOQ.</li>
+                  <li>Piping materials are selected from the approved project PMS.</li>
+                  <li>Rates are based on available SOR, PO, and derived references.</li>
+                  <li>Estimate excludes statutory taxes unless specifically stated.</li>
+                  <li>This estimate is valid for 6 months from the approval date.</li>
+                </ul>
+              </div>
+              <div class="split-section">
+                <h3>Supporting Documents</h3>
+                <div class="document-list">
+                  <a class="document-row" href="#"><span><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5"/></svg>Foundation Drawing.pdf</span><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></a>
+                  <a class="document-row" href="NirmaanQ-Civil-BOQ-Template-ANNEXURE-2.xlsx"><span><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5"/></svg>Civil BOQ ANNEXURE-2.xlsx</span><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></a>
+                  <a class="document-row" href="Piping_MTO.html"><span><svg viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5"/></svg>Piping Material Take-Off</span><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></a>
+                </div>
+              </div>
+            </section>
+          </div>
+
+        </div>
+      </div>
+
+      <footer class="bottom-actions">
+        <span class="footer-meta">Estimate Rev. 0 | Prepared by Operation Team | Last updated 12 June 2026</span>
+        <div class="bottom-buttons">
+          <a class="button button-secondary" href="NirmaanQ-Quantity-Input-Review.html">Back to Quantity Input</a>
+          <button class="button button-secondary" id="download-report" type="button">Download Estimate PDF</button>
+          <button class="button button-primary" id="submit-review" type="button">Download Estimate Excel</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const themeToggle = document.querySelector(".theme-toggle");
+
+    function updateThemeControl(theme) {
+      const isDark = theme === "dark";
+      const label = isDark ? "Switch to light mode" : "Switch to dark mode";
+      themeToggle.setAttribute("aria-label", label);
+      themeToggle.setAttribute("title", label);
+    }
+
+    updateThemeControl(document.documentElement.dataset.theme || "light");
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem("nirmaanq-theme", nextTheme);
+      updateThemeControl(nextTheme);
+    });
+
+    document.querySelectorAll(".expand-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const details = document.querySelector(`#${button.dataset.target}`);
+        const willOpen = details.hidden;
+        details.hidden = !willOpen;
+        button.classList.toggle("open", willOpen);
+        button.setAttribute("aria-expanded", String(willOpen));
+      });
+    });
+
+    document.querySelector("#submit-review").addEventListener("click", () => {
+      document.querySelector("#estimate-status").innerHTML = '<span class="status-dot"></span>Excel preparation requested';
+    });
+
+    document.querySelector("#download-report").addEventListener("click", () => {
+      document.querySelector("#estimate-status").innerHTML = '<span class="status-dot"></span>PDF preparation requested';
+    });
+
+    try {
+      const draft = JSON.parse(localStorage.getItem("nirmaanq-project-draft") || "{}");
+      if (draft.projectName) {
+        document.querySelector("#project-name").textContent = draft.projectName;
+        document.querySelector("#cost-report-project").textContent = draft.projectName;
+      }
+      if (draft.projectCode) document.querySelector("#project-code").textContent = draft.projectCode;
+      if (draft.location) {
+        document.querySelector("#project-location").textContent =
+          draft.location === "Other location" ? (draft.otherLocation || draft.location) : draft.location;
+      }
+    } catch (error) {
+      console.warn("Project draft could not be loaded.", error);
+    }
+  </script>
+</body>
+</html>
